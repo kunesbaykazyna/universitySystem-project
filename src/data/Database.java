@@ -4,12 +4,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import models.ResearcherDecorator;
 import models.User;
-import utils.Course;
-import utils.Message;
-import utils.News;
-import utils.Request;
-
+import utils.*;
+import models.UserComponent;
 public class Database implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final String DATA_FILE = "database.ser";
@@ -44,6 +42,34 @@ public class Database implements Serializable {
         }
     }
 
+    public ResearcherDecorator getTopCitedResearcher() {
+        ResearcherDecorator top = null;
+        int maxH = -1;
+        for (User u : users) {
+            UserComponent comp = u;
+            if (comp instanceof ResearcherDecorator) {
+                ResearcherDecorator rd = (ResearcherDecorator) comp;
+                int h = rd.calculateHIndex();
+                if (h > maxH) { maxH = h; top = rd; }
+            } 
+//            else if (comp instanceof UserDecorator && ((UserDecorator) comp).getWrappedUser() instanceof ResearcherDecorator) {
+//            }
+        }
+        return top;
+    }
+
+    public void announceTopResearcher() {
+        ResearcherDecorator top = getTopCitedResearcher();
+        if (top != null) {
+            News newsItem = new News(
+                "Top Researcher",
+                top.getName() + " has the highest H-index (" + top.calculateHIndex() + ") in the university!",
+                true
+            );
+            news.add(newsItem);
+            save();
+        }
+    }
     private static Database load() {
         File file = new File(DATA_FILE);
         if (!file.exists()) return new Database();
@@ -51,7 +77,7 @@ public class Database implements Serializable {
                      new ObjectInputStream(new FileInputStream(file))) {
             return (Database) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Жүктеу қатесі: " + e.getMessage());
+            System.err.println(e.getMessage());
             return new Database();
         }
     }

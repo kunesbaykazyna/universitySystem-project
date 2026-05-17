@@ -1,6 +1,9 @@
 package utils;
 
-public interface RequestState {
-	public String getStatusName();
-    public void handle(Request request);
+import java.io.Serializable;
+
+public interface RequestState extends Serializable{
+    String getStatusName();
+    void approve(Request request);
+    void reject(Request request);
 }

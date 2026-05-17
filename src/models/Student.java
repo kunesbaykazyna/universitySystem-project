@@ -5,7 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import core.LocalizationManager;
+import data.Database;
 import enumerations.Faculty;
+import enumerations.Semester;
 import utils.Course;
 import utils.Enrollment;
 import utils.Mark;
@@ -40,25 +43,27 @@ public class Student extends User{
         System.out.print(e.getMark().getTotal());
     }
 
-    public void registerForCourse(Course c) {
-        if (c == null) {
-            return;
-        }
+    public void registerForCourse(Course c, Semester semester) {
+        if (c == null) return;
         if (!canRegisterForCourse(c)) {
-            System.out.println("Регистрация отклонена: превышен лимит кредитов или тип курса неверный.");
+            System.out.println(LocalizationManager.getString("err_reg_denied"));
             return;
         }
-        Enrollment newEnrollment = new Enrollment();
-        newEnrollment.course = c;
-        newEnrollment.students = this;
-        newEnrollment.setStatus("PENDING");
+        Enrollment newEnrollment = new Enrollment(c, this, semester);
         enrollments.add(newEnrollment);
         c.addEnrollment(newEnrollment);
-        System.out.println("Студент отправил заявку на курс: " + c.getName());
+        
+        Manager manager = (Manager) Database.getInstance().getUsers().stream()
+                .filter(u -> u instanceof Manager)
+                .findFirst()
+                .orElse(null);
+        if (manager != null) {
+            manager.addRegistration(newEnrollment);
+        }
+        System.out.println(LocalizationManager.getString("student_applied", c.getName()));
     }
-
     public void rateTeacher(Teacher t, int rating) {
-        System.out.println("Студент оценил преподавателя " + t.getName() + " на " + rating + "/10");
+        System.out.println(LocalizationManager.getString("student_rated_teacher", t.getName(), rating));
     }
 
     public int getYearsOfStudy() {
@@ -84,33 +89,31 @@ public class Student extends User{
 
     public int getCurrentCredits() {
         int totalCredits = 0;
-
         for (Enrollment enrollment : enrollments) {
-            if (enrollment == null) {
-                continue;
+            if (enrollment == null || enrollment.getCourse() == null) continue;
+            if ("APPROVED".equals(enrollment.getStatus())) { 
+                totalCredits += enrollment.getCourse().getCredits();
             }
-            if (enrollment.course == null) {
-                continue;
-            }
-            if ("REJECTED".equals(enrollment.getStatus())) {
-                continue;
-            }
-
-            totalCredits = totalCredits + enrollment.course.getCredits();
         }
-
         return totalCredits;
     }
 
-    public boolean canRegisterForCourse(Course c) {
-        if (c == null) {
-            return false;
+    public int getTotalFailCount() {
+        int fails = 0;
+        for (Enrollment enrollment : enrollments) {
+            if (enrollment.getMark() != null && enrollment.getMark().getTotal() < 50) {
+                fails++;
+            }
         }
-        if (!c.isValidCourseType()) {
-            return false;
-        }
+        return fails;
+    }
 
-        return getCurrentCredits() + c.getCredits() <= 21;
+    public boolean canRegisterForCourse(Course course) {
+        if (course == null) return false;
+        if (this.getCurrentCredits() + course.getCredits() > 21) return false;
+        if (this.getTotalFailCount() >= 3) return false;
+        if (!course.isOfferedForFaculty(this.getFaculty())) return false;
+        return true;
     }
 
     public void updateGpa() {
@@ -122,7 +125,7 @@ public class Student extends User{
             if (enrollment == null) {
                 continue;
             }
-            if (enrollment.course == null) {
+            if (enrollment.getCourse() == null) {
                 continue;
             }
             if (enrollment.getMark() == null) {
@@ -133,9 +136,9 @@ public class Student extends User{
             }
 
             Mark mark = enrollment.getMark();
-            marks.put(enrollment.course, mark);
-            total = total + mark.convertToGpa() * enrollment.course.getCredits();
-            credits = credits + enrollment.course.getCredits();
+            marks.put(enrollment.getCourse(), mark);
+            total = total + mark.convertToGpa() * enrollment.getCourse().getCredits();
+            credits = credits + enrollment.getCourse().getCredits();
         }
 
         if (credits == 0) {
@@ -147,36 +150,36 @@ public class Student extends User{
 
     public String generateTranscript() {
         StringBuilder transcript = new StringBuilder();
-        transcript.append("Транскрипт студента ").append(getName()).append("\n");
+        transcript.append(LocalizationManager.getString("transcript_title", getName()));
 
         for (Enrollment enrollment : enrollments) {
             if (enrollment == null) {
                 continue;
             }
-            if (enrollment.course == null) {
+            if (enrollment.getCourse() == null) {
                 continue;
             }
             if (!"APPROVED".equals(enrollment.getStatus())) {
                 continue;
             }
 
-            transcript.append(enrollment.course.getCourseCode());
-            transcript.append(" ");
-            transcript.append(enrollment.course.getName());
-            transcript.append(" кредиты=");
-            transcript.append(enrollment.course.getCredits());
+            String courseLine = LocalizationManager.getString("transcript_course_line", 
+                    enrollment.getCourse().getCourseCode(), 
+                    enrollment.getCourse().getName(), 
+                    enrollment.getCourse().getCredits());
+            transcript.append(courseLine);
 
             if (enrollment.getMark() != null) {
-                transcript.append(" итог=");
-                transcript.append(enrollment.getMark().getTotal());
-                transcript.append(" GPA=");
-                transcript.append(enrollment.getMark().convertToGpa());
+                // Добавляем часть с оценками
+                String markPart = LocalizationManager.getString("transcript_mark_part", 
+                        enrollment.getMark().getTotal(), 
+                        enrollment.getMark().convertToGpa());
+                transcript.append(markPart);
             }
-
             transcript.append("\n");
         }
 
-        transcript.append("Средний GPA: ").append(getGpa());
+        transcript.append(LocalizationManager.getString("transcript_gpa_footer", getGpa()));
         return transcript.toString();
     }
 
@@ -186,7 +189,7 @@ public class Student extends User{
 
     @Override
     public String toString() {
-        return "Студент{имя='" + getName() + "', факультет=" + faculty + ", годОбучения=" + yearsOfStudy + ", gpa=" + gpa + "}";
+        return LocalizationManager.getString("student_info", getName(), faculty, yearsOfStudy, getGpa());
     }
 
 

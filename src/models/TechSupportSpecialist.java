@@ -1,5 +1,9 @@
 package models;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import data.Database;
 import utils.Request;
 
 public class TechSupportSpecialist extends Employee{
@@ -16,5 +20,16 @@ public class TechSupportSpecialist extends Employee{
             request.reject();
         }
     }
+	
+	public List<Request> viewPendingRequests() {
+	    Database db = Database.getInstance();
+	    List<Request> pending = new ArrayList<>();
+	    for (Request r : db.getRequests()) {
+	        if (r.getCurrentStatus().equals("Pending")) {
+	            pending.add(r);
+	        }
+	    }
+	    return pending;
+	}
 
 }

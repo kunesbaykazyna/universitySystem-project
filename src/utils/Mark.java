@@ -1,9 +1,13 @@
 package utils;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Mark {
-    private double att1;
+import core.LocalizationManager;
+
+public class Mark implements Serializable{
+	private static final long serialVersionUID = 1L;
+	private double att1;
     private double att2;
     private double finalExam;
 
@@ -102,6 +106,6 @@ public class Mark {
 
     @Override
     public String toString() {
-        return "Оценка{аттестация1=" + att1 + ", аттестация2=" + att2 + ", финал=" + finalExam + ", итог=" + getTotal() + "}";
+        return LocalizationManager.getString("mark_info", att1, att2, finalExam, getTotal());
     }
 }

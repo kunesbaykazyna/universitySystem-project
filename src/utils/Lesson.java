@@ -1,14 +1,18 @@
 package utils;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
+import core.LocalizationManager;
 import enumerations.LessonType;
 import models.Student;
 
-public class Lesson {
-    public LessonType lessontype;
+public class Lesson implements Serializable{
+	private static final long serialVersionUID = 1L;
+	private LessonType lessontype;
     private int hours;
+    private Course course;
     private Map<Student,Boolean> attendance = new java.util.HashMap<>();
 
     public Lesson() {
@@ -23,12 +27,19 @@ public class Lesson {
         this.hours = hours;
     }
 
-    public void markAttendance(Student s,boolean present) {
-        if (s == null) {
+    public void markAttendance(Student s, boolean present) {
+        if (s == null) return;
+        if (course == null) {
+            attendance.put(s, present);
             return;
         }
-
-        attendance.put(s,present);
+        boolean isEnrolled = course.getE().stream()
+            .anyMatch(en -> en.getStudent().equals(s) && "APPROVED".equals(en.getStatus()));
+        if (!isEnrolled) {
+            System.out.println(LocalizationManager.getString("err_student_not_enrolled", course.getName()));
+            return;
+        }
+        attendance.put(s, present);
     }
 
     public Map<Student, Boolean> getAttendance() {
@@ -59,6 +70,13 @@ public class Lesson {
 
     @Override
     public String toString() {
-        return "Занятие{тип=" + lessontype + ", часы=" + hours + ", посещаемость=" + attendance + "}";
+        return LocalizationManager.getString("lesson_info", lessontype, hours, attendance);
     }
+
+	public Course getCourse() {
+		return course;
+	}
+	public void setCourse(Course course) { 
+		this.course = course; 
+	}
 }

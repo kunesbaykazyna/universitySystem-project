@@ -14,7 +14,15 @@ public class ResearchPaper implements Serializable {
     private int citations;
     private String doi;
 
-    public ResearchPaper() {}
+    public ResearchPaper(String title2, String authors2, String journal2, int pages2, Date date2, int citations2, String doi) {
+    	this.authors=authors2;
+    	this.citations=citations2;
+    	this.title=title2;
+    	this.journal=journal2;
+    	this.pages=pages2;
+    	this.date=date2;
+    	this.doi=doi;
+    }
 
 
     public String getCitation(CitationStrategy strategy) {

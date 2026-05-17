@@ -2,17 +2,20 @@ package utils;
 
 public class PendingState implements RequestState {
 
+	private static final long serialVersionUID = 1L;
+
 	@Override
-	public String getStatusName() { 
-		return "Pending"; 
+	public void approve(Request request) {
+	    request.setState(new ApprovedState());
 	}
 
 	@Override
-	public void handle(Request request) {
-		//реализовать метод так чтобы в след state переходил типо так
-		request.setState(new ApprovedState());
-		
-		
+	public void reject(Request request) {
+	    request.setState(new RejectedState());
 	}
+
+	public String getStatusName() { 
+		return "Pending";
+	} 
 	
 }

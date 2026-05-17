@@ -2,6 +2,8 @@ package models;
 
 import java.util.*;
 
+import core.LocalizationManager;
+import data.Database;
 import enumerations.*;
 import utils.*;
 
@@ -9,7 +11,7 @@ public class Teacher extends Employee{
     private static final long serialVersionUID = 1L;
     private Faculty faculty;
     private TeacherType teacherType;
-    private List<Complaint> complaints = new ArrayList<>();
+    private List<Complaint> myComplaints = new ArrayList<>();
 
     public Teacher(String userId, String name, String password, String login, double salary, Faculty faculty, TeacherType teacherType) {
         super(userId, name, password, login, salary);
@@ -17,36 +19,39 @@ public class Teacher extends Employee{
         this.teacherType = teacherType;
     }
 
-    public void createComplaint() {
-        System.out.println(getName() + " создал жалобу");
-    }
-
-    public void putMark(Enrollment e, Mark markValue) {
-        if (e == null) {
+//    public void putMark(Enrollment e, Mark markValue) {
+//        if (e == null) {
+//            return;
+//        }
+//        if (markValue == null) {
+//            return;
+//        }
+//
+//        e.setMark(markValue);
+//
+//        if (e.getStudent() == null) {
+//            return;
+//        }
+//        if (e.getCourse() == null) {
+//            return;
+//        }
+//
+//        e.getStudent().getMarks().put(e.getCourse(), markValue);
+//    }
+    
+    public void putMark(Enrollment enrollment, Mark mark) {
+        if (enrollment == null || mark == null) return;
+        Course course = enrollment.getCourse();
+        if (!course.getTeachers().contains(this)) {
+            System.out.println(LocalizationManager.getString("err_not_your_course"));
             return;
         }
-        if (markValue == null) {
+        if (!"APPROVED".equals(enrollment.getStatus())) {
+            System.out.println(LocalizationManager.getString("err_enrollment_not_approved"));
             return;
         }
-
-        e.setMark(markValue);
-
-        if (e.students == null) {
-            return;
-        }
-        if (e.course == null) {
-            return;
-        }
-
-        e.students.getMarks().put(e.course, markValue);
-    }
-
-    public void putMarks(Enrollment e, Mark markValue) {
-        putMark(e, markValue);
-    }
-
-    public void markkAttendance(Lesson less, Student s, boolean present) {
-        markAttendance(less, s, present);
+        enrollment.setMark(mark);
+        System.out.println(LocalizationManager.getString("mark_successfully_put"));
     }
 
     public void markAttendance(Lesson less, Student s, boolean present) {
@@ -60,47 +65,25 @@ public class Teacher extends Employee{
         less.markAttendance(s, present);
     }
 
-    public void viewStudentInfo(Student s) {
-        if (s == null) {
-            return;
-        }
-
-        System.out.print(s);
+    public String getStudentInfo(Student s) {
+        return s.toString();
     }
 
-    public void sendComplaints(String text, UrgencyLevel urgency) {
-        Complaint newComplaint = new Complaint(text, urgency, this.getUserId());
-        complaints.add(newComplaint);
-        System.out.println("Жалоба отправлена.");
+    public void sendComplaint(Student student, String text, UrgencyLevel urgency, Manager dean) {
+        Complaint complaint = new Complaint(this, student, text, urgency);
+        myComplaints.add(complaint);
+        dean.addComplaint(complaint);
+        System.out.println(LocalizationManager.getString("complaint_sent", student.getName()));
     }
 
-    public void sendComplaintToManager(Manager manager, String text, UrgencyLevel urgency) {
-        if (manager == null) {
-            return;
-        }
-        Complaint complaint = new Complaint(text, urgency, getUserId());
-        complaints.add(complaint);
-        manager.addComplaint(complaint);
-    }
-
-    public List<Course> getMyCourses(List<Course> allCourses) {
+    public List<Course> getMyCourses() {
+        List<Course> allCourses = Database.getInstance().getCourses();
         List<Course> myCourses = new ArrayList<>();
-
-        if (allCourses == null) {
-            return myCourses;
-        }
-
-        for (Course course : allCourses) {
-            if (course == null) {
-                continue;
+        for (Course c : allCourses) {
+            if (c.getTeachers().contains(this)) {
+                myCourses.add(c);
             }
-            if (!course.getTeachers().contains(this)) {
-                continue;
-            }
-
-            myCourses.add(course);
         }
-
         return myCourses;
     }
 
@@ -118,21 +101,28 @@ public class Teacher extends Employee{
             if (enrollment == null) {
                 continue;
             }
-            if (enrollment.students == null) {
+            if (enrollment.getStudent() == null) {
                 continue;
             }
             if (!"APPROVED".equals(enrollment.getStatus())) {
                 continue;
             }
 
-            students.add(enrollment.students);
+            students.add(enrollment.getStudent());
         }
 
         return students;
     }
+    
+    public void sendMessage(Employee receiver, String content) {
+        Message msg = new Message(this, receiver, content);
+        Database.getInstance().getMessages().add(msg);
+        Database.getInstance().save();
+        System.out.println(LocalizationManager.getString("message_sent", receiver.getName()));
+    }
 
     public List<Complaint> getComplaints() {
-        return complaints;
+        return myComplaints;
     }
 
     public Faculty getFaculty() {
@@ -145,6 +135,6 @@ public class Teacher extends Employee{
 
     @Override
     public String toString() {
-        return "Преподаватель{имя='" + getName() + "', факультет=" + faculty + ", должность=" + teacherType + "}";
+        return LocalizationManager.getString("teacher_info", getName(), faculty, teacherType);
     }
 }

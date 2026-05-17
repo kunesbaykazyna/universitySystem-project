@@ -11,4 +11,8 @@ public abstract class UserDecorator implements UserComponent {
     public String getName() {
         return decoratedUser.getName();
     }
+
+    public UserComponent getWrappedUser() {
+        return decoratedUser;
+    }
 }

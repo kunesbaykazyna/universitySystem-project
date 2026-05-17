@@ -1,24 +1,67 @@
 package models;
 
+import data.Database;
+import factory.UserFactory;
 import java.util.List;
 
-public class Admin extends Employee{
+import core.LocalizationManager;
+
+public class Admin extends Employee {
 	private static final long serialVersionUID = 1L;
 
 	public Admin(String userId, String name, String password, String login, double salary) {
-		super(userId, name, password, login, salary);
-	}
-	
-	public void addUser(List<User> users, User u) {
-        users.add(u);
+        super(userId, name, password, login, salary);
     }
 
-    public void removeUser(List<User> users, User u) {
-        users.remove(u);
+    public void addUser(User user) {
+        Database db = Database.getInstance();
+        List<User> allUsers = db.getUsers();
+
+        boolean exists = allUsers.stream()
+                .anyMatch(u -> u.getUserId().equals(user.getUserId()) || u.getLogin().equals(user.getLogin()));
+        if (exists) {
+        	System.out.println(LocalizationManager.getString("err_user_exists"));
+            return;
+        }
+
+        allUsers.add(user);
+        db.save(); //изменение в бд
+        db.getLog().addEntry(this.getUserId(), LocalizationManager.getString("log_add_user", user.getUserId()));
+        System.out.println(LocalizationManager.getString("user_added", user.getName()));
+    }
+
+    public void addUser(String role, String userId, String name, String password, String login, Object... extraArgs) {
+        User user = UserFactory.createUser(role, userId, name, password, login, extraArgs);
+        addUser(user); 
+    }
+
+    public void removeUser(String userId) {
+        Database db = Database.getInstance();
+        List<User> allUsers = db.getUsers();
+
+        User toRemove = allUsers.stream()
+                .filter(u -> u.getUserId().equals(userId))
+                .findFirst()
+                .orElse(null);
+
+        if (toRemove == null) {
+        	System.out.println(LocalizationManager.getString("err_user_not_found", userId));
+            return;
+        }
+
+        //админ не может удалить себя
+        if (toRemove.getUserId().equals(this.getUserId())) {
+        	System.out.println(LocalizationManager.getString("err_cannot_delete_self"));
+            return;
+        }
+
+        allUsers.remove(toRemove);
+        db.save();
+        db.getLog().addEntry(this.getUserId(), LocalizationManager.getString("log_remove_user", userId));
+        System.out.println(LocalizationManager.getString("user_removed", toRemove.getName()));
     }
 
     public void viewLogs() {
-        System.out.println("Отображение логов системы...");
+        Database.getInstance().getLog().printAll();
     }
-	
 }

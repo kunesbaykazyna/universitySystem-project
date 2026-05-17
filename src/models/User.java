@@ -3,6 +3,7 @@ package models;
 import java.io.Serializable;
 import java.util.Objects;
 
+import core.LocalizationManager;
 import enumerations.Language;
 
 public abstract class User implements UserComponent,Serializable{
@@ -20,24 +21,27 @@ public abstract class User implements UserComponent,Serializable{
 		this.userId=userId;
 	}
 
-	 public boolean login(String enteredId, String enteredPassword) {
-		 if (this.userId.equals(enteredId) && this.password.equals(enteredPassword)) {
-			 System.out.println("Welcome, " + name + "!");
-	         return true;
-	        }
-		 return false;
+//	 public boolean login(String enteredId, String enteredPassword) {
+//		 if (this.userId.equals(enteredId) && this.password.equals(enteredPassword)) {
+//				System.out.println(LocalizationManager.getString("welcome_user", name));
+//	         return true;
+//	        }
+//		 return false;
+//	}
+	
+	public boolean login(String enteredLogin, String enteredPassword) {
+	    if (this.login.equals(enteredLogin) && this.password.equals(enteredPassword)) {
+			System.out.println(LocalizationManager.getString("welcome_user", name));
+	        return true;
+	    }
+	    return false;
 	}
 	
 	 public void switchLanguage(Language newLanguage) {
-	        this.currentLanguage = newLanguage;
-	        String message = "";
-	        switch (newLanguage) {
-	            case EN -> message = "Language changed to English";
-	            case RU -> message = "Язык изменен на русский";
-	            case KZ -> message = "Тіл қазақшаға өзгертілді";
-	        }
-	        System.out.println(message);
-	    }
+		    LocalizationManager.setLanguage(newLanguage);
+		    this.currentLanguage = newLanguage;
+			System.out.println(LocalizationManager.getString("language.changed"));
+		}
 	 
 	 @Override
 	    public boolean equals(Object o) {
@@ -58,23 +62,23 @@ public abstract class User implements UserComponent,Serializable{
 		 }
 	    
 	    public void update(String newsMessage) {
-	        System.out.println("Уведомление для " + getName() + ": " + newsMessage);
+			System.out.println(LocalizationManager.getString("user_notification", getName(), newsMessage));
 	    }
 	    
-	 public String getUserId() {
-	 	 return userId;
-	 }
-
-	 public String getLogin() {
-	 	 return login;
-	 }
-
-	 public String getName() {
-	 	 return name;
-	 }
-
-	 public String getPassword() {
-		 return password;
-	 }
+		 public String getUserId() {
+		 	 return userId;
+		 }
+	
+		 public String getLogin() {
+		 	 return login;
+		 }
+	
+		 public String getName() {
+		 	 return name;
+		 }
+	
+		 public String getPassword() {
+			 return password;
+		 }
 	
 }

@@ -1,5 +1,5 @@
 package enumerations;
 
 public enum CourseType {
-	MAJOR, MINOR
+	MAJOR, MINOR,FREE_ELECTIVE
 }

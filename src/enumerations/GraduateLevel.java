@@ -1,5 +1,5 @@
 package enumerations;
 
 public enum GraduateLevel {
-	Master,PhD
+	MASTER,PHD
 }

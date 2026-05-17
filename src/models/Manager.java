@@ -1,8 +1,10 @@
 package models;
 
 import java.util.ArrayList;
+import data.Database;
 import java.util.List;
 
+import core.LocalizationManager;
 import utils.Complaint;
 import utils.Course;
 import utils.Enrollment;
@@ -17,10 +19,13 @@ public class Manager extends Employee{
     public Manager(String userId, String name, String password, String login, double salary) {
         super(userId, name, password, login, salary);
     }
-
-    public void manageNews(ArrayList<News> newsList, String title, String text, boolean pin) {
-        newsList.add(new News(title, text, pin));
-    }
+    
+    public void manageNews(String title, String text, boolean pin) {
+        Database db = Database.getInstance();
+        News news = new News(title, text, pin);
+        db.getNews().add(news);
+        db.save();
+      }
 
     public void assignTeacher(Teacher t, Course c) {
         if (t == null) {
@@ -31,26 +36,13 @@ public class Manager extends Employee{
         }
 
         c.addTeacher(t);
-        System.out.println("Преподаватель " + t.getName() + " назначен на курс " + c.getName());
+        System.out.println(LocalizationManager.getString("success_assign_teacher",t.getName(),c.getName()));
     }
 
-    public void assiginTeacher(Teacher t, Course c) {
-        assignTeacher(t, c);
-    }
-
-    public void addCourse(List<Course> allCourses, Course newCourse) {
-        if (allCourses == null) {
-            return;
-        }
-        if (newCourse == null) {
-            return;
-        }
-
-        allCourses.add(newCourse);
-    }
-
-    public void createReport(String reportData) {
-        System.out.println("Отчет создан: " + reportData);
+    public void addCourse(Course newCourse) {
+        Database db = Database.getInstance();
+        db.getCourses().add(newCourse);
+        db.save();
     }
 
     public String createReport(List<Course> courses) {
@@ -77,7 +69,7 @@ public class Manager extends Employee{
                 if (enrollment == null) {
                     continue;
                 }
-                if (enrollment.students == null) {
+                if (enrollment.getStudent() == null) {
                     continue;
                 }
                 if (enrollment.getMark() == null) {
@@ -89,7 +81,7 @@ public class Manager extends Employee{
 
                 Mark mark = enrollment.getMark();
 
-                report.append(enrollment.students.getName());
+                report.append(enrollment.getStudent().getName());
                 report.append(": ");
                 report.append(mark.getTotal());
                 report.append(" GPA ");
@@ -112,45 +104,43 @@ public class Manager extends Employee{
             return;
         }
 
-        Student student = e.students;
-        Course course = e.course;
-
-        if (student == null) {
-            return;
-        }
-        if (course == null) {
+        if (!"PENDING".equals(e.getStatus())) {
+            System.out.println(LocalizationManager.getString("request_state"));
             return;
         }
 
-        boolean alreadyInStudentList = student.getEnrollments().contains(e);
-        boolean validRegistration = false;
+        Student student = e.getStudent();
+        Course course = e.getCourse();
 
-        if (alreadyInStudentList) {
-            if (course.isValidCourseType()) {
-                if (student.getCurrentCredits() <= 21) {
-                    validRegistration = true;
-                }
-            }
-        } else {
-            validRegistration = student.canRegisterForCourse(course);
+        if (student == null || course == null) {
+            System.out.println("Ошибка: студент или курс отсутствуют.");
+            return;
         }
 
-        if (!validRegistration) {
+        // 2. Проверка, не зарегистрирован ли студент уже на этот курс (одобренная заявка)
+        boolean alreadyApproved = student.getEnrollments().stream()
+                .anyMatch(en -> en.getCourse().equals(course) && "APPROVED".equals(en.getStatus()));
+        if (alreadyApproved) {
             e.reject();
-            System.out.println("Регистрация отклонена.");
+            System.out.println(LocalizationManager.getString("alreadyregister",getName()));
+            registrationQueue.remove(e);
             return;
         }
 
-        e.approve();
-
-        if (!alreadyInStudentList) {
-            student.getEnrollments().add(e);
+        // 3. Основная проверка (кредиты, тип курса, провалы и т.д.)
+        if (!student.canRegisterForCourse(course)) {
+            e.reject();
+            System.out.println("Регистрация отклонена: студент не соответствует требованиям курса.");
+            registrationQueue.remove(e);
+            return;
         }
 
+        // 4. Всё хорошо – одобряем
+        e.approve();
+        student.getEnrollments().add(e);
         course.addEnrollment(e);
         registrationQueue.remove(e);
-
-        System.out.println("Регистрация одобрена на курс " + course.getName());
+        System.out.println(LocalizationManager.getString("failtoregister",getName()));
     }
 
     public void addRegistration(Enrollment e) {

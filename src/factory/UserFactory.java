@@ -4,6 +4,7 @@ import models.*;
 import enumerations.Faculty;
 import enumerations.GraduateLevel;
 import enumerations.TeacherType;
+import exceptions.LowHIndexException;
 
 public class UserFactory {
 
@@ -47,12 +48,16 @@ public class UserFactory {
                 Faculty       faculty      = (Faculty)       extraArgs[0];
                 int           yearsOfStudy = (int)           extraArgs[1];
                 GraduateLevel level        = (GraduateLevel) extraArgs[2];
-                Teacher       supervisor   = (Teacher)       extraArgs[3];
-                yield new GraduatedStudent(userId, name, password, login,
-                        yearsOfStudy, faculty, supervisor, level);
+                ResearcherDecorator       supervisor   = (ResearcherDecorator)       extraArgs[3];
+                try {
+                    yield new GraduatedStudent(userId, name, password, login,
+                            yearsOfStudy, faculty, supervisor, level);
+                } catch (LowHIndexException e) {
+                    throw new IllegalArgumentException(e.getMessage());
+                }
             }
 
-            default -> throw new IllegalArgumentException("Белгісіз рол: " + role);
+            default -> throw new IllegalArgumentException("Unknown role: " + role);
         };
     }
 }

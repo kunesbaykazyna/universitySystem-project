@@ -1,24 +1,32 @@
 package utils;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
 
+import core.LocalizationManager;
 import enumerations.UrgencyLevel;
+import models.Student;
+import models.Teacher;
 
-public class Complaint {
+public class Complaint implements Serializable{
+	private static final long serialVersionUID = 1L;
     private String text;
     private UrgencyLevel urgency;
     private Date date;
-    private String teacherId;
+    private Teacher teacher;
+    private Student student;
 
-    public Complaint(String text, UrgencyLevel urgency, String teacherId) {
+    public Complaint(Teacher teacher,Student student, String text, UrgencyLevel urgency) {
         this.text = text;
         this.urgency = urgency;
-        this.teacherId = teacherId;
+        this.teacher=teacher;
+        this.student=student;
         this.date = new Date();
     }
 
-    public String getText() {
+
+	public String getText() {
         return text;
     }
 
@@ -30,8 +38,8 @@ public class Complaint {
         return date;
     }
 
-    public String getTeacherId() {
-        return teacherId;
+    public Teacher getTeacher() {
+        return teacher;
     }
 
     @Override
@@ -44,18 +52,22 @@ public class Complaint {
         if (!Objects.equals(text, complaint.text)) return false;
         if (urgency != complaint.urgency) return false;
         if (!Objects.equals(date, complaint.date)) return false;
-        if (!Objects.equals(teacherId, complaint.teacherId)) return false;
+        if (!Objects.equals(teacher, complaint.teacher)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(text, urgency, date, teacherId);
+        return Objects.hash(text, urgency, date, teacher);
     }
 
     @Override
     public String toString() {
-        return "Жалоба от [" + teacherId + "], срочность: " + urgency + "\nТекст: " + text;
+        return LocalizationManager.getString("complaint_info", teacher.getName(), urgency, text);
     }
+
+	public Student getStudent() {
+		return student;
+	}
 }

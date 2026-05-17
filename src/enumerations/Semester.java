@@ -1,5 +1,5 @@
 package enumerations;
 
 public enum Semester {
-	Spring,Summer,Fall
+	SPRING,SUMMER,FALL
 }
