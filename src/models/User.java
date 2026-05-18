@@ -13,7 +13,8 @@ public abstract class User implements UserComponent,Serializable{
 	private String name;
 	private String password;
 	public Language currentLanguage = Language.RU;
-	
+	private boolean isResearcher = false;
+
 	public User(String userId,String name,String password,String login) {
 		this.name=name;
 		this.password=password;
@@ -80,5 +81,8 @@ public abstract class User implements UserComponent,Serializable{
 		 public String getPassword() {
 			 return password;
 		 }
-	
+		 public boolean isResearcher() { return isResearcher; }
+		 
+		 public void setResearcher(boolean isResearcher) { this.isResearcher = isResearcher; }
+			
 }

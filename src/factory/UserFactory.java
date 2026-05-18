@@ -3,6 +3,7 @@ package factory;
 import models.*;
 import enumerations.Faculty;
 import enumerations.GraduateLevel;
+import enumerations.ManagerTypes;
 import enumerations.TeacherType;
 import exceptions.LowHIndexException;
 
@@ -36,7 +37,8 @@ public class UserFactory {
 
             case "MANAGER" -> {
                 double salary = (double) extraArgs[0];
-                yield new Manager(userId, name, password, login, salary);
+                ManagerTypes mType = (ManagerTypes) extraArgs[1];
+                yield new Manager(userId, name, password, login, salary, mType);
             }
 
             case "TECH_SUPPORT" -> {

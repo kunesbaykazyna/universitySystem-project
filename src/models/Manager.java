@@ -1,23 +1,27 @@
 package models;
 
 import java.util.ArrayList;
+
 import data.Database;
 import java.util.List;
-
+import enumerations.ManagerTypes;
 import core.LocalizationManager;
 import utils.Complaint;
 import utils.Course;
 import utils.Enrollment;
 import utils.Mark;
+import utils.Message;
 import utils.News;
 
 public class Manager extends Employee{
     private static final long serialVersionUID = 1L;
-    private List<Enrollment> registrationQueue = new ArrayList<>();
+//    private List<Enrollment> registrationQueue = new ArrayList<>();
     private List<Complaint> complaints = new ArrayList<>();
+    private ManagerTypes managerType;
 
-    public Manager(String userId, String name, String password, String login, double salary) {
+    public Manager(String userId, String name, String password, String login, double salary,ManagerTypes managerType) {
         super(userId, name, password, login, salary);
+        this.managerType=managerType;
     }
     
     public void manageNews(String title, String text, boolean pin) {
@@ -43,6 +47,7 @@ public class Manager extends Employee{
         Database db = Database.getInstance();
         db.getCourses().add(newCourse);
         db.save();
+        System.out.println(LocalizationManager.getString("success_course"));
     }
 
     public String createReport(List<Course> courses) {
@@ -100,9 +105,7 @@ public class Manager extends Employee{
     }
 
     public void approveRegistration(Enrollment e) {
-        if (e == null) {
-            return;
-        }
+        if (e == null) return;
 
         if (!"PENDING".equals(e.getStatus())) {
             System.out.println(LocalizationManager.getString("request_state"));
@@ -113,51 +116,63 @@ public class Manager extends Employee{
         Course course = e.getCourse();
 
         if (student == null || course == null) {
-            System.out.println("Ошибка: студент или курс отсутствуют.");
+            System.out.println(LocalizationManager.getString("err_student_or_course_missing"));
             return;
         }
 
-        // 2. Проверка, не зарегистрирован ли студент уже на этот курс (одобренная заявка)
         boolean alreadyApproved = student.getEnrollments().stream()
                 .anyMatch(en -> en.getCourse().equals(course) && "APPROVED".equals(en.getStatus()));
         if (alreadyApproved) {
             e.reject();
-            System.out.println(LocalizationManager.getString("alreadyregister",getName()));
-            registrationQueue.remove(e);
+            System.out.println(LocalizationManager.getString("alreadyregister", course.getName()));
+            Database.getInstance().getRegistrationQueue().remove(e);
             return;
         }
 
-        // 3. Основная проверка (кредиты, тип курса, провалы и т.д.)
         if (!student.canRegisterForCourse(course)) {
             e.reject();
-            System.out.println("Регистрация отклонена: студент не соответствует требованиям курса.");
-            registrationQueue.remove(e);
+            System.out.println(LocalizationManager.getString("err_student_not_meet_requirements"));
+            Database.getInstance().getRegistrationQueue().remove(e);
             return;
         }
 
-        // 4. Всё хорошо – одобряем
         e.approve();
         student.getEnrollments().add(e);
         course.addEnrollment(e);
-        registrationQueue.remove(e);
-        System.out.println(LocalizationManager.getString("failtoregister",getName()));
+        Database.getInstance().getRegistrationQueue().remove(e);
+        Database.getInstance().save();
+        System.out.println(LocalizationManager.getString("registration_approved", course.getName()));
     }
 
-    public void addRegistration(Enrollment e) {
-        if (e == null) {
-            return;
-        }
-        if (registrationQueue.contains(e)) {
-            return;
-        }
+//    public void addRegistration(Enrollment e) {
+//        if (e == null) {
+//            return;
+//        }
+//        if (Database.getInstance().getRegistrationQueue().contains(e)) {
+//            return;
+//        }
+//
+//        Database.getInstance().getRegistrationQueue().add(e);
+//    }
 
-        registrationQueue.add(e);
+    public void addRegistration(Enrollment e) {
+        if (e == null) return;
+        List<Enrollment> queue = Database.getInstance().getRegistrationQueue();
+        if (queue.contains(e)) return;
+        queue.add(e);
+    }
+    
+    public void sendMessage(Employee receiver, String content) {
+        Message msg = new Message(this, receiver, content);
+        Database.getInstance().getMessages().add(msg);
+        Database.getInstance().save();
+        System.out.println(LocalizationManager.getString("message_sent", receiver.getName()));
     }
 
     public List<Enrollment> getRegistrationQueue() {
-        return registrationQueue;
+        return Database.getInstance().getRegistrationQueue();
     }
-
+    
     public List<Complaint> getComplaints() {
         return complaints;
     }
@@ -168,4 +183,12 @@ public class Manager extends Employee{
         }
     }
 
+	public ManagerTypes getManagerType() {
+		return managerType;
+	}
+
+	@Override
+	public String toString() {
+	    return LocalizationManager.getString("manager_info", getUserId(), getName(), getSalary(), managerType);
+	}
 }

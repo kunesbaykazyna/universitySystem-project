@@ -32,6 +32,14 @@ public class Message implements Serializable{
 //		}
 //	}
 	
+	public Message getMessage(Message m) {
+		return m;
+	}
+	
+	public Employee getReceiver() {
+		return receiver;
+	}
+	
 	@Override
 	public String toString() {
 		return LocalizationManager.getString("message_format", sender.getName(), receiver.getName(), text);

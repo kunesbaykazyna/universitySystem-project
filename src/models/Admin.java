@@ -25,7 +25,7 @@ public class Admin extends Employee {
         }
 
         allUsers.add(user);
-        db.save(); //изменение в бд
+        db.save(); //изменение в бд сохранить
         db.getLog().addEntry(this.getUserId(), LocalizationManager.getString("log_add_user", user.getUserId()));
         System.out.println(LocalizationManager.getString("user_added", user.getName()));
     }

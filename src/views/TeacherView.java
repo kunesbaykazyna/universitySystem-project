@@ -34,15 +34,19 @@ public class TeacherView implements View {
     @Override
     public void showMenu() {
         System.out.println("\n--- " + LocalizationManager.getString("menu_teacher_title") + " ---");
-        System.out.println(LocalizationManager.getString("teacher_opt1"));
-        System.out.println(LocalizationManager.getString("teacher_opt2"));
-        System.out.println(LocalizationManager.getString("teacher_opt3"));
-        System.out.println(LocalizationManager.getString("teacher_opt4"));
+        System.out.println("1. " + LocalizationManager.getString("teacher_opt1"));
+        System.out.println("2. " + LocalizationManager.getString("teacher_opt2"));
+        System.out.println("3. " + LocalizationManager.getString("teacher_opt3"));
+        System.out.println("4. " + LocalizationManager.getString("teacher_opt4"));
+        System.out.println("5. " + LocalizationManager.getString("teacher_opt5"));
+        System.out.println("6. " + LocalizationManager.getString("teacher_opt6"));
         if (getResearcherDecorator() != null) {
-            System.out.println(LocalizationManager.getString("teacher_opt_research"));
+            System.out.println("7. " + LocalizationManager.getString("teacher_opt_research"));
         }
-        System.out.println(LocalizationManager.getString("change_lang"));
-        System.out.println(LocalizationManager.getString("logout"));
+        System.out.println("8. " + LocalizationManager.getString("view_inbox"));
+        System.out.println("9. " + LocalizationManager.getString("view_news"));
+        System.out.println("10. " + LocalizationManager.getString("change_lang"));
+        System.out.println("0. " + LocalizationManager.getString("logout_msg"));
     }
 
     @Override
@@ -52,11 +56,15 @@ public class TeacherView implements View {
             case 2 -> putMark();
             case 3 -> markAttendance();
             case 4 -> sendComplaint();
-            case 5 -> {
+            case 5 -> viewStudentInfo();
+            case 6 -> sendMessageToEmployee();
+            case 7 -> {
                 if (getResearcherDecorator() != null) researchMenu();
                 else System.out.println(LocalizationManager.getString("err_invalid"));
             }
-            case 9 -> changeLanguage();
+            case 8 -> viewInbox();
+            case 9 -> viewNews();
+            case 10 -> changeLanguage();
             case 0 -> System.out.println(LocalizationManager.getString("logout_msg"));
             default -> System.out.println(LocalizationManager.getString("err_invalid"));
         }
@@ -71,6 +79,41 @@ public class TeacherView implements View {
         }
     }
 
+    private void viewInbox() {
+        List<Message> inbox = getTeacherObject().getInbox();
+        if (inbox.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_messages"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("inbox_title"));
+        for (Message m : inbox) {
+            System.out.println(m);
+        }
+    }
+
+    private void viewNews() {
+        List<News> allNews = db.getNews();
+        if (allNews.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_news"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("news_header"));
+        for (News n : allNews) {
+            if (n.isPinned()) {
+                System.out.println(" "+ LocalizationManager.getString("news_item", n.getTitle(), n.getPostDate()) + LocalizationManager.getString("pinned_news"));
+                System.out.println(LocalizationManager.getString("news_content", n.getContent()));
+                System.out.println("---");
+            }
+        }
+        for (News n : allNews) {
+            if (!n.isPinned()) {
+                System.out.println(LocalizationManager.getString("news_item", n.getTitle(), n.getPostDate()));
+                System.out.println(LocalizationManager.getString("news_content", n.getContent()));
+                System.out.println("---");
+            }
+        }
+    }
+    
     private void putMark() {
         List<Course> myCourses = getTeacherObject().getMyCourses();
         if (myCourses.isEmpty()) {
@@ -126,7 +169,7 @@ public class TeacherView implements View {
         if (idx < 0 || idx >= myCourses.size()) return;
         Course course = myCourses.get(idx);
 
-        System.out.print("Lesson type (LECTURE/PRACTICE): ");
+        System.out.print(LocalizationManager.getString("prompt_lesson_type"));
         LessonType type = LessonType.valueOf(scanner.nextLine().toUpperCase());
         Lesson lesson = new Lesson(type, 2);
         lesson.setCourse(course);
@@ -159,10 +202,59 @@ public class TeacherView implements View {
         Manager manager = (Manager) db.getUsers().stream()
                 .filter(u -> u instanceof Manager).findFirst().orElse(null);
         if (manager == null) {
-            System.out.println("No manager available to receive complaint.");
+            System.out.println(LocalizationManager.getString("error_no_manager"));
             return;
         }
         getTeacherObject().sendComplaint((Student) student, text, urgency, manager);
+    }
+
+    private void viewStudentInfo() {
+        List<Course> myCourses = getTeacherObject().getMyCourses();
+        if (myCourses.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_courses"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_course"));
+        for (int i = 0; i < myCourses.size(); i++) {
+            System.out.println((i + 1) + ". " + myCourses.get(i).getName());
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= myCourses.size()) return;
+        Course course = myCourses.get(idx);
+        List<Student> students = getTeacherObject().viewStudents(course);
+        if (students.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_students"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("students_in_course", course.getName()));
+        for (Student s : students) {
+            System.out.println(s);
+        }
+    }
+
+    private void sendMessageToEmployee() {
+        List<Employee> employees = db.getUsers().stream()
+                .filter(u -> u instanceof Employee && !u.equals(getTeacherObject()))
+                .map(u -> (Employee) u)
+                .toList();
+        if (employees.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_other_employees"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_receiver"));
+        for (int i = 0; i < employees.size(); i++) {
+            System.out.println((i + 1) + ". " + employees.get(i).getName() + " (ID: " + employees.get(i).getUserId() + ")");
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= employees.size()) return;
+        Employee receiver = employees.get(idx);
+        System.out.print(LocalizationManager.getString("enter_message_text"));
+        String content = scanner.nextLine();
+        if (content.trim().isEmpty()) {
+            System.out.println(LocalizationManager.getString("err_invalid"));
+            return;
+        }
+        getTeacherObject().sendMessage(receiver, content);
     }
 
     private void researchMenu() {
@@ -170,14 +262,14 @@ public class TeacherView implements View {
         if (rd == null) return;
         boolean back = false;
         while (!back) {
-            System.out.println("\n--- Research Menu ---");
-            System.out.println("1. View papers");
-            System.out.println("2. Add paper");
-            System.out.println("3. Print papers (by citations)");
-            System.out.println("4. Print papers (by date)");
-            System.out.println("5. Print papers (by pages)");
-            System.out.println("6. Calculate H-index");
-            System.out.println("0. Back");
+            System.out.println(LocalizationManager.getString("research_menu_title"));
+            System.out.println("1. " + LocalizationManager.getString("research_view_papers"));
+            System.out.println("2. " + LocalizationManager.getString("research_add_paper"));
+            System.out.println("3. " + LocalizationManager.getString("research_print_citations"));
+            System.out.println("4. " + LocalizationManager.getString("research_print_date"));
+            System.out.println("5. " + LocalizationManager.getString("research_print_pages"));
+            System.out.println("6. " + LocalizationManager.getString("research_calc_hindex"));
+            System.out.println("0. " + LocalizationManager.getString("research_back"));
             int ch = readInt();
             switch (ch) {
                 case 1 -> rd.getPublishedPapers().forEach(System.out::println);
@@ -193,21 +285,21 @@ public class TeacherView implements View {
     }
 
     private void addPaper(ResearcherDecorator rd) {
-        System.out.print("Title: ");
+        System.out.print(LocalizationManager.getString("prompt_title"));
         String title = scanner.nextLine();
-        System.out.print("Authors: ");
+        System.out.print(LocalizationManager.getString("prompt_authors"));
         String authors = scanner.nextLine();
-        System.out.print("Journal: ");
+        System.out.print(LocalizationManager.getString("prompt_journal"));
         String journal = scanner.nextLine();
-        int pages = readInt("Pages: ");
-        int citations = readInt("Citations: ");
-        System.out.print("DOI: ");
+        int pages = readInt(LocalizationManager.getString("prompt_pages"));
+        int citations = readInt(LocalizationManager.getString("prompt_citations"));
+        System.out.print(LocalizationManager.getString("prompt_doi"));
         String doi = scanner.nextLine();
         ResearchPaper paper = new ResearchPaper(title, authors, journal, pages, new Date(), citations, doi);
         rd.addPaper(paper);
         System.out.println(LocalizationManager.getString("paper_added"));
     }
-
+    
     private void changeLanguage() {
         System.out.println(LocalizationManager.getString("change_lang"));
         int choice = readInt();
@@ -224,8 +316,8 @@ public class TeacherView implements View {
     }
 
     private UrgencyLevel readUrgency() {
-        System.out.println(LocalizationManager.getString("urgency_level"));
-        System.out.println("1. LOW  2. MEDIUM  3. HIGH");
+    	System.out.println(LocalizationManager.getString("urgency_level"));
+        System.out.println(LocalizationManager.getString("urgency_menu"));
         int choice = readInt();
         return switch (choice) {
             case 1 -> UrgencyLevel.LOW;

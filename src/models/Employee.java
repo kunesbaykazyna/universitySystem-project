@@ -1,8 +1,11 @@
 package models;
 
+import java.util.List;
 import java.util.Objects;
 
 import core.LocalizationManager;
+import data.Database;
+import utils.Message;
 
 public class Employee extends User implements Comparable<Employee> {
 	private static final long serialVersionUID = 1L;
@@ -43,4 +46,10 @@ public class Employee extends User implements Comparable<Employee> {
     public int compareTo(Employee other) {
         return Double.compare(this.salary, other.salary);
     }
+	
+	public List<Message> getInbox() {
+	    return Database.getInstance().getMessages().stream()
+	            .filter(m -> m.getReceiver() != null && m.getReceiver().equals(this))
+	            .toList();
+	}
 }

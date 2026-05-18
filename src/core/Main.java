@@ -18,9 +18,19 @@ public class Main {
         if (db.getUsers() == null || db.getUsers().isEmpty()) {
             createDefaultUsers();
         }
+        
+        System.out.println("Choose language: 1 - English, 2 - Русский, 3 - Қазақша");
+        int langChoice = readInt();
+        Language lang = switch (langChoice) {
+            case 1 -> Language.EN;
+            case 2 -> Language.RU;
+            case 3 -> Language.KZ;
+            default -> Language.EN;
+        };
+        LocalizationManager.setLanguage(lang);
 
         while (true) {
-            System.out.println(LocalizationManager.getString("     welcome     "));
+        	System.out.println("\n=== " + LocalizationManager.getString("welcome") + " ===");
             
             User currentUser = authenticate();
             if (currentUser == null) {
@@ -65,26 +75,26 @@ public class Main {
             Admin admin = new Admin("A001", "Admin", "admin123", "admin", 50000.0);
             db.getUsers().add(admin);
             db.save();
-            System.out.println("[админ по деволту успешно создан..!]");
-            System.out.println("Логин: admin | Пароль: admin123 | ID: A001");
+//            System.out.println("[админ по деволту успешно создан..!]");
+//            System.out.println("Логин: admin | Пароль: admin123 | ID: A001");
         } catch (Exception e) {
             System.err.println("ошибка при создании дефолтного админа: " + e.getMessage());
         }
     }
 
-    // если юзер должен быть ресерчером то декорирует
+    // если юзер должен быть ресерчером то декорирует и если просто студент или тичер то админ должен дать апрув
     private static UserComponent wrapIfResearcher(User user) {
-        if (user instanceof Teacher) {
-            Teacher teacher = (Teacher) user;
-            if (teacher.getTeacherType() == TeacherType.PROFESSOR) {
-                return new ResearcherDecorator(user);
-            }
-        } else if (user instanceof GraduatedStudent) {
+        if (user.isResearcher()) {
+            return new ResearcherDecorator(user);
+        }
+        if (user instanceof Teacher && ((Teacher) user).getTeacherType() == TeacherType.PROFESSOR) {
+            return new ResearcherDecorator(user);
+        }
+        if (user instanceof GraduatedStudent) {
             return new ResearcherDecorator(user);
         }
         return user;
     }
-
     private static View createView(UserComponent user) {
         UserComponent baseUser = user;
         if (user instanceof UserDecorator) {

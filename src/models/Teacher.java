@@ -39,6 +39,13 @@ public class Teacher extends Employee{
 //        e.getStudent().getMarks().put(e.getCourse(), markValue);
 //    }
     
+    public void requestResearcherStatus() {
+        Request request = new Request();
+        request.setDescription("User " + getName() + " (ID: " + getUserId() + ") requests researcher status.");
+        Database.getInstance().getRequests().add(request);
+        System.out.println(LocalizationManager.getString("request_sent"));
+    }
+    
     public void putMark(Enrollment enrollment, Mark mark) {
         if (enrollment == null || mark == null) return;
         Course course = enrollment.getCourse();
@@ -88,29 +95,16 @@ public class Teacher extends Employee{
     }
 
     public List<Student> viewStudents(Course c) {
+        Course freshCourse = Database.getInstance().getCourses().stream()
+                .filter(course -> course.getCourseCode().equals(c.getCourseCode()))
+                .findFirst()
+                .orElse(c);
         List<Student> students = new ArrayList<>();
-
-        if (c == null) {
-            return students;
-        }
-        if (c.getE() == null) {
-            return students;
-        }
-
-        for (Enrollment enrollment : c.getE()) {
-            if (enrollment == null) {
-                continue;
+        for (Enrollment enrollment : freshCourse.getE()) {
+            if (enrollment != null && enrollment.getStudent() != null && "APPROVED".equals(enrollment.getStatus())) {
+                students.add(enrollment.getStudent());
             }
-            if (enrollment.getStudent() == null) {
-                continue;
-            }
-            if (!"APPROVED".equals(enrollment.getStatus())) {
-                continue;
-            }
-
-            students.add(enrollment.getStudent());
         }
-
         return students;
     }
     

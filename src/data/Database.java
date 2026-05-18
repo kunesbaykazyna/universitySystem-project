@@ -13,6 +13,7 @@ public class Database implements Serializable {
     private static final String DATA_FILE = "database.ser";
     private static volatile Database instance;
 
+    private List<Enrollment> registrationQueue = new ArrayList<>();
     private List<User>    users    = new ArrayList<>();
     private List<Course>  courses  = new ArrayList<>();
     private List<News>    news     = new ArrayList<>();
@@ -105,5 +106,15 @@ public class Database implements Serializable {
                 .filter(u -> u.getUserId().equals(id))
                 .findFirst()
                 .orElse(null);
+
     }
+
+    public List<Enrollment> getRegistrationQueue() {
+        if (registrationQueue == null) {
+            registrationQueue = new ArrayList<>();
+        }
+        return registrationQueue;
+    }
+   
 }
+

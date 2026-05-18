@@ -12,6 +12,7 @@ import enumerations.Semester;
 import utils.Course;
 import utils.Enrollment;
 import utils.Mark;
+import utils.Request;
 
 public class Student extends User{
     private static final long serialVersionUID = 1L;
@@ -20,7 +21,7 @@ public class Student extends User{
     private Faculty faculty;
     private List<Enrollment> enrollments = new ArrayList<>();
     private Map<Course, Mark> marks = new HashMap<>();
-
+    
     public Student(String userId, String name, String password, String login,int yos,Faculty faculty) {
         super(userId, name, password, login);
         this.faculty=faculty;
@@ -108,6 +109,13 @@ public class Student extends User{
         return fails;
     }
 
+    public void requestResearcherStatus() {
+        Request request = new Request();
+        request.setDescription("User " + getName() + " (ID: " + getUserId() + ") requests researcher status.");
+        Database.getInstance().getRequests().add(request);
+        System.out.println(LocalizationManager.getString("request_sent"));
+    }
+    
     public boolean canRegisterForCourse(Course course) {
         if (course == null) return false;
         if (this.getCurrentCredits() + course.getCredits() > 21) return false;
@@ -170,7 +178,6 @@ public class Student extends User{
             transcript.append(courseLine);
 
             if (enrollment.getMark() != null) {
-                // Добавляем часть с оценками
                 String markPart = LocalizationManager.getString("transcript_mark_part", 
                         enrollment.getMark().getTotal(), 
                         enrollment.getMark().convertToGpa());

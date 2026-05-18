@@ -20,12 +20,12 @@ public class AdminView implements View {
     @Override
     public void showMenu() {
         System.out.println("\n--- " + LocalizationManager.getString("menu_admin_title") + " ---");
-        System.out.println(LocalizationManager.getString("admin_opt1"));
-        System.out.println(LocalizationManager.getString("admin_opt2"));
-        System.out.println(LocalizationManager.getString("admin_opt3"));
-        System.out.println(LocalizationManager.getString("admin_opt4"));
-        System.out.println(LocalizationManager.getString("change_lang"));
-        System.out.println(LocalizationManager.getString("logout"));
+        System.out.println("1. " + LocalizationManager.getString("admin_opt1"));
+        System.out.println("2. " + LocalizationManager.getString("admin_opt2"));
+        System.out.println("3. " + LocalizationManager.getString("admin_opt3"));
+        System.out.println("4. " + LocalizationManager.getString("admin_opt4"));
+        System.out.println("9. " + LocalizationManager.getString("change_lang"));
+        System.out.println("0. " + LocalizationManager.getString("logout_msg"));
     }
 
     @Override
@@ -46,34 +46,39 @@ public class AdminView implements View {
         String role = scanner.nextLine().toUpperCase();
 
         try {
-            String userId = readNonEmpty("User ID: ");
-            String name = readNonEmpty("Name: ");
-            String pwd = readNonEmpty("Password: ");
-            String login = readNonEmpty("Login: ");
+            String userId = readNonEmpty(LocalizationManager.getString("prompt_user_id"));
+            String name = readNonEmpty(LocalizationManager.getString("prompt_name"));
+            String pwd = readNonEmpty(LocalizationManager.getString("prompt_password"));
+            String login = readNonEmpty(LocalizationManager.getString("prompt_login"));
 
             User user = null;
 
             switch (role) {
                 case "STUDENT" -> {
-                    int yos = readInt("Years of study: ");
+                    int yos = readInt(LocalizationManager.getString("prompt_years_of_study"));
                     Faculty fac = readFaculty();
                     user = UserFactory.createUser(role, userId, name, pwd, login, fac, yos);
                 }
                 case "TEACHER" -> {
                     Faculty fac = readFaculty();
                     TeacherType tt = readTeacherType();
-                    double sal = readDouble("Salary: ");
+                    double sal = readDouble(LocalizationManager.getString("prompt_salary"));
                     user = UserFactory.createUser(role, userId, name, pwd, login, fac, tt, sal);
                 }
-                case "ADMIN", "MANAGER", "TECH_SUPPORT" -> {
-                    double sal = readDouble("Salary: ");
+                case "ADMIN", "TECH_SUPPORT" -> {
+                    double sal = readDouble(LocalizationManager.getString("prompt_salary"));
                     user = UserFactory.createUser(role, userId, name, pwd, login, sal);
                 }
+                case "MANAGER" -> {
+                    double sal = readDouble(LocalizationManager.getString("prompt_salary"));
+                    ManagerTypes mType = readManagerType(); // запрос типа менеджера
+                    user = UserFactory.createUser(role, userId, name, pwd, login, sal, mType);
+                }
                 case "GRADUATED_STUDENT" -> {
-                    int yos = readInt("Years of study: ");
+                    int yos = readInt(LocalizationManager.getString("prompt_years_of_study"));
                     Faculty fac = readFaculty();
                     GraduateLevel level = readGraduateLevel();
-                    String supId = readNonEmpty("Supervisor ID: ");
+                    String supId = readNonEmpty(LocalizationManager.getString("prompt_supervisor_id"));
                     User supUser = db.findUserById(supId);
                     if (supUser == null) {
                         System.out.println(LocalizationManager.getString("err_supervisor_not_found"));
@@ -81,17 +86,17 @@ public class AdminView implements View {
                     }
                     ResearcherDecorator supervisor = new ResearcherDecorator(supUser);
                     if (supervisor.calculateHIndex() < 3) {
-                        throw new IllegalArgumentException("Supervisor h-index < 3 – cannot supervise graduate student");
+                        System.out.println(LocalizationManager.getString("error_supervisor_hindex"));
+                        return;
                     }
                     user = UserFactory.createUser(role, userId, name, pwd, login, fac, yos, level, supervisor);
                 }
-                default -> throw new IllegalArgumentException("Unknown role: " + role);
+                default -> System.out.println(LocalizationManager.getString("error_unknown_role", role));
             }
 
             if (user != null) {
                 admin.addUser(user);
-//                System.out.println(LocalizationManager.getString("user_added", user.getName()));
-                }
+            }
         } catch (Exception e) {
             System.out.println(LocalizationManager.getString("err_general") + e.getMessage());
         }
@@ -109,10 +114,9 @@ public class AdminView implements View {
     private void viewLogs() {
         admin.viewLogs();
     }
-
     private void changeLanguage() {
         System.out.println(LocalizationManager.getString("change_lang"));
-        System.out.println("1. English  2. Русский  3. Қазақша");
+        System.out.println(LocalizationManager.getString("language_choice_menu"));
         int choice = readInt();
         Language newLang = switch (choice) {
             case 1 -> Language.EN;
@@ -121,7 +125,18 @@ public class AdminView implements View {
             default -> null;
         };
         if (newLang != null) {
-            admin.switchLanguage(newLang); 
+            admin.switchLanguage(newLang);
+        }
+    }
+    
+    private ManagerTypes readManagerType() {
+        while (true) {
+            System.out.print(LocalizationManager.getString("prompt_manager_type"));
+            try {
+                return ManagerTypes.valueOf(scanner.nextLine().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println(LocalizationManager.getString("error_invalid_manager_type"));
+            }
         }
     }
 
@@ -141,10 +156,12 @@ public class AdminView implements View {
             return -1;
         }
     }
+
     private int readInt(String prompt) {
         System.out.print(prompt);
         return readInt();
     }
+
     private double readDouble(String prompt) {
         System.out.print(prompt);
         try {
@@ -157,33 +174,33 @@ public class AdminView implements View {
 
     private Faculty readFaculty() {
         while (true) {
-            System.out.print("Faculty (e.g., FIT , BS , SEPI): ");
+            System.out.print(LocalizationManager.getString("prompt_faculty"));
             try {
                 return Faculty.valueOf(scanner.nextLine().toUpperCase());
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid faculty. Try again.");
+                System.out.println(LocalizationManager.getString("error_invalid_faculty"));
             }
         }
     }
 
     private TeacherType readTeacherType() {
         while (true) {
-            System.out.print("Teacher type (LECTOR, SENIOR_LECTOR, PROFESSOR): ");
+            System.out.print(LocalizationManager.getString("prompt_teacher_type"));
             try {
                 return TeacherType.valueOf(scanner.nextLine().toUpperCase());
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid type. Try again.");
+                System.out.println(LocalizationManager.getString("error_invalid_teacher_type"));
             }
         }
     }
 
     private GraduateLevel readGraduateLevel() {
         while (true) {
-            System.out.print("Graduate level (MASTER, PHD): ");
+            System.out.print(LocalizationManager.getString("prompt_graduate_level"));
             try {
                 return GraduateLevel.valueOf(scanner.nextLine().toUpperCase());
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid level. Try again.");
+                System.out.println(LocalizationManager.getString("error_invalid_level"));
             }
         }
     }

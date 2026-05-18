@@ -7,6 +7,7 @@ import core.LocalizationManager;
 public class Request implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private RequestState state; 
+	private String description;
 
     public Request() {
         this.state = new PendingState();
@@ -34,7 +35,16 @@ public class Request implements Serializable{
         this.state = state;
     }
     
+    public void setDescription(String desc) { this.description = desc; }
+	public String getDescription() { return description; }
+
+    
     public String getCurrentStatus() {
         return state.getStatusName();
     } 
+    
+    @Override
+    public String toString() {
+        return LocalizationManager.getString("request_info", "User", state.getStatusName());
+    }
 }
