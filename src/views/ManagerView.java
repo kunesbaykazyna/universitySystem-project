@@ -30,7 +30,8 @@ public class ManagerView implements View {
         System.out.println("8. " + LocalizationManager.getString("manager_opt8")); 
         System.out.println("9. " + LocalizationManager.getString("manager_opt9"));
         System.out.println("10. Manage news");    
-        System.out.println("11. " + LocalizationManager.getString("change_lang"));
+        System.out.println("11. " + LocalizationManager.getString("send_support_request"));
+        System.out.println("12. " + LocalizationManager.getString("change_lang"));
         System.out.println("0. " + LocalizationManager.getString("logout_msg"));
     }
 
@@ -47,60 +48,10 @@ public class ManagerView implements View {
             case 8 -> viewAllTeachersSorted();
             case 9 -> sendMessageToEmployee();
             case 10 -> manageNews();
-            case 11 -> changeLanguage();
+            case 11 -> sendSupportRequest();
+            case 12 -> changeLanguage();
             case 0 -> System.out.println(LocalizationManager.getString("logout_msg"));
             default -> System.out.println(LocalizationManager.getString("err_invalid"));
-        }
-    }
-
-    private void manageNews() {
-    	System.out.println(LocalizationManager.getString("manage_news_title"));
-        System.out.println(LocalizationManager.getString("manage_news_view"));
-        System.out.println(LocalizationManager.getString("manage_news_add"));
-        System.out.print(LocalizationManager.getString("manage_news_choice"));
-        int ch = readInt();
-        if (ch == 1) {
-            List<News> allNews = db.getNews();
-            if (allNews.isEmpty()) {
-                System.out.println(LocalizationManager.getString("no_news"));
-            } else {
-                for (News n : allNews) {
-                    System.out.println(n);
-                    System.out.println("--- Comments ---");
-                    for (News.Comment c : n.getComments()) {
-                        System.out.println(c);
-                    }
-                    System.out.println("----------------");
-                }
-            }
-        } else if (ch == 2) {
-            System.out.print(LocalizationManager.getString("prompt_news_title"));
-            String title = scanner.nextLine();
-            System.out.print(LocalizationManager.getString("prompt_news_content"));
-            String content = scanner.nextLine();
-            System.out.print(LocalizationManager.getString("prompt_news_pin"));
-            boolean pin = Boolean.parseBoolean(scanner.nextLine());
-            manager.manageNews(title, content, pin);
-            System.out.println(LocalizationManager.getString("news_added"));
-        } else {
-            System.out.println(LocalizationManager.getString("err_invalid"));
-        }
-    }
-
-    private void makeResearcher() {
-    	System.out.print(LocalizationManager.getString("prompt_make_researcher"));
-        String userId = scanner.nextLine();
-        User user = db.findUserById(userId);
-        if (user == null) {
-            System.out.println(LocalizationManager.getString("err_user_not_found", userId));
-            return;
-        }
-        if (user.isResearcher()) {
-            System.out.println(LocalizationManager.getString("user_already_researcher"));
-        } else {
-            user.setResearcher(true);
-            db.save();
-            System.out.println(LocalizationManager.getString("user_now_researcher", user.getName()));
         }
     }
 
@@ -117,32 +68,7 @@ public class ManagerView implements View {
         Course course = new Course(code, name, credits, type, faculty);
         manager.addCourse(course);
     }
-
-    private void sendMessageToEmployee() {
-        List<Employee> employees = db.getUsers().stream()
-                .filter(u -> u instanceof Employee && !u.equals(manager))
-                .map(u -> (Employee) u)
-                .toList();
-        if (employees.isEmpty()) {
-            System.out.println(LocalizationManager.getString("no_other_employees"));
-            return;
-        }
-        System.out.println(LocalizationManager.getString("select_receiver"));
-        for (int i = 0; i < employees.size(); i++) {
-            System.out.println((i + 1) + ". " + employees.get(i).getName() + " (ID: " + employees.get(i).getUserId() + ")");
-        }
-        int idx = readInt() - 1;
-        if (idx < 0 || idx >= employees.size()) return;
-        Employee receiver = employees.get(idx);
-        System.out.print(LocalizationManager.getString("enter_message_text"));
-        String content = scanner.nextLine();
-        if (content.trim().isEmpty()) {
-            System.out.println(LocalizationManager.getString("err_invalid"));
-            return;
-        }
-        manager.sendMessage(receiver, content);
-    }
-
+    
     private void assignTeacherToCourse() {
         List<Course> courses = db.getCourses();
         if (courses.isEmpty()) {
@@ -176,6 +102,53 @@ public class ManagerView implements View {
         manager.assignTeacher(teacher, course);
     }
 
+    private void approveRegistrations() {
+        List<Enrollment> queue = manager.getRegistrationQueue();
+        if (queue.isEmpty()) {
+            System.out.println(LocalizationManager.getString("error_no_pending"));
+            return;
+        }
+        List<Enrollment> copy = new ArrayList<>(queue);
+        for (Enrollment e : copy) {
+            System.out.println(e);
+            System.out.print(LocalizationManager.getString("prompt_approve"));
+            String ans = scanner.nextLine();
+            if ("y".equalsIgnoreCase(ans)) {
+                manager.approveRegistration(e);
+            } else {
+                e.reject();
+                System.out.println(LocalizationManager.getString("status_rejected"));
+            }
+        }
+    }
+    
+    private void createReport() {
+        List<Course> courses = db.getCourses();
+        String report = manager.createReport(courses);
+        System.out.println(report);
+    }
+    
+    private void viewAllCourses() {
+        db.getCourses().forEach(System.out::println);
+    }
+    
+    private void makeResearcher() {
+    	System.out.print(LocalizationManager.getString("prompt_make_researcher"));
+        String userId = scanner.nextLine();
+        User user = db.findUserById(userId);
+        if (user == null) {
+            System.out.println(LocalizationManager.getString("err_user_not_found", userId));
+            return;
+        }
+        if (user.isResearcher()) {
+            System.out.println(LocalizationManager.getString("user_already_researcher"));
+        } else {
+            user.setResearcher(true);
+            db.save();
+            System.out.println(LocalizationManager.getString("user_now_researcher", user.getName()));
+        }
+    }
+    
     private void viewAllStudentsSorted() {
         List<Student> students = db.getUsers().stream()
                 .filter(u -> u instanceof Student)
@@ -202,7 +175,7 @@ public class ManagerView implements View {
             System.out.println(s);
         }
     }
-
+    
     private void viewAllTeachersSorted() {
         List<Teacher> teachers = db.getUsers().stream()
                 .filter(u -> u instanceof Teacher)
@@ -229,35 +202,84 @@ public class ManagerView implements View {
             System.out.println(t);
         }
     }
-
-    private void approveRegistrations() {
-        List<Enrollment> queue = manager.getRegistrationQueue();
-        if (queue.isEmpty()) {
-            System.out.println(LocalizationManager.getString("error_no_pending"));
+    
+    private void sendMessageToEmployee() {
+        List<Employee> employees = db.getUsers().stream()
+                .filter(u -> u instanceof Employee && !u.equals(manager))
+                .map(u -> (Employee) u)
+                .toList();
+        if (employees.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_other_employees"));
             return;
         }
-        List<Enrollment> copy = new ArrayList<>(queue);
-        for (Enrollment e : copy) {
-            System.out.println(e);
-            System.out.print(LocalizationManager.getString("prompt_approve"));
-            String ans = scanner.nextLine();
-            if ("y".equalsIgnoreCase(ans)) {
-                manager.approveRegistration(e);
-            } else {
-                e.reject();
-                System.out.println(LocalizationManager.getString("status_rejected"));
+        System.out.println(LocalizationManager.getString("select_receiver"));
+        for (int i = 0; i < employees.size(); i++) {
+            System.out.println((i + 1) + ". " + employees.get(i).getName() + " (ID: " + employees.get(i).getUserId() + ")");
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= employees.size()) return;
+        Employee receiver = employees.get(idx);
+        System.out.print(LocalizationManager.getString("enter_message_text"));
+        String content = scanner.nextLine();
+        if (content.trim().isEmpty()) {
+            System.out.println(LocalizationManager.getString("err_invalid"));
+            return;
+        }
+        manager.sendMessage(receiver, content);
+    }
+    
+    private void manageNews() {
+    	System.out.println(LocalizationManager.getString("manage_news_title"));
+        System.out.println(LocalizationManager.getString("manage_news_view"));
+        System.out.println(LocalizationManager.getString("manage_news_add"));
+        System.out.print(LocalizationManager.getString("manage_news_choice"));
+        int ch = readInt();
+        if (ch == 1) {
+        	List<News> allNews = db.getNews();
+            if (allNews.isEmpty()) {
+                System.out.println(LocalizationManager.getString("no_news"));
+                return;
             }
+            System.out.println(LocalizationManager.getString("news_header"));
+            List<News> sorted = new ArrayList<>(allNews);
+            sorted.sort((a,b) -> {
+                if (a.isPinned() != b.isPinned())
+                    return Boolean.compare(b.isPinned(), a.isPinned());
+                return b.getPostDate().compareTo(a.getPostDate());
+            });
+            for (News n : sorted) {
+                System.out.println(n);
+                System.out.println("--- Comments ---");
+                for (News.Comment c : n.getComments()) {
+                    System.out.println(c);
+                }
+            }
+        } else if (ch == 2) {
+            System.out.print(LocalizationManager.getString("prompt_news_title"));
+            String title = scanner.nextLine();
+            System.out.print(LocalizationManager.getString("prompt_news_content"));
+            String content = scanner.nextLine();
+            System.out.print(LocalizationManager.getString("prompt_news_pin"));
+            boolean pin = Boolean.parseBoolean(scanner.nextLine());
+            manager.manageNews(title, content, pin);
+            System.out.println(LocalizationManager.getString("news_added"));
+        } else {
+            System.out.println(LocalizationManager.getString("err_invalid"));
         }
     }
-
-    private void createReport() {
-        List<Course> courses = db.getCourses();
-        String report = manager.createReport(courses);
-        System.out.println(report);
-    }
-
-    private void viewAllCourses() {
-        db.getCourses().forEach(System.out::println);
+    
+    private void sendSupportRequest() {
+        System.out.print(LocalizationManager.getString("enter_problem_description"));
+        String description = scanner.nextLine();
+        if (description.trim().isEmpty()) {
+            System.out.println(LocalizationManager.getString("err_invalid"));
+            return;
+        }
+        Request request = new Request();
+        request.setDescription(description);
+        db.getRequests().add(request);
+        db.save();
+        System.out.println(LocalizationManager.getString("request_sent"));
     }
 
     private void changeLanguage() {

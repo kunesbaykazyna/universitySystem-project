@@ -75,7 +75,7 @@ public class Main {
             Admin admin = new Admin("A001", "Admin", "admin123", "admin", 50000.0);
             db.getUsers().add(admin);
             db.save();
-//            System.out.println("[админ по деволту успешно создан..!]");
+//            System.out.println("[админ по дефолту успешно создан..!]");
 //            System.out.println("Логин: admin | Пароль: admin123 | ID: A001");
         } catch (Exception e) {
             System.err.println("ошибка при создании дефолтного админа: " + e.getMessage());

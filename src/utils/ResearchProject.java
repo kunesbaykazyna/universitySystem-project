@@ -30,8 +30,13 @@ public class ResearchProject implements Serializable {
         if (!participants.contains(researcher)) participants.add(researcher);
     }
 
-    // геттеры
-    public String getTopic() { return topic; }
-    public List<ResearchPaper> getPublishedPapers() { return publishedPapers; }
-    public List<ResearcherDecorator> getParticipants() { return participants; }
+    public String getTopic() { 
+    	return topic;
+    }
+    public List<ResearchPaper> getPublishedPapers() { 
+    	return publishedPapers; 
+    }
+    public List<ResearcherDecorator> getParticipants() {
+    	return participants; 
+    }
 }

@@ -21,16 +21,6 @@ public class Course implements Serializable{
     private CourseType courseType;
     private List<Teacher> teachers = new ArrayList<>();
 
-//    public Course() {
-//    }
-//
-//    public Course(String courseCode, String name, int credits, String courseType) {
-//        this.courseCode = courseCode;
-//        this.name = name;
-//        this.credits = credits;
-//        this.courseType = parseCourseType(courseType);
-//    }
-
     public Course(String courseCode, String name, int credits, CourseType courseType,Faculty faculty) {
         this.courseCode = courseCode;
         this.name = name;
@@ -78,21 +68,6 @@ public class Course implements Serializable{
         }
         return true;
     }
-
-//    private CourseType parseCourseType(String type) {
-//        if (type == null) {
-//            return null;
-//        }
-//
-//        if (type.equalsIgnoreCase("Major")) {
-//            return CourseType.MAJOR;
-//        }
-//        if (type.equalsIgnoreCase("Minor")) {
-//            return CourseType.MINOR;
-//        }
-//
-//        return null;
-//    }
 
     @Override
     public boolean equals(Object o) {

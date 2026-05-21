@@ -1,6 +1,11 @@
 package views;
 
 import models.*;
+import utils.Message;
+import utils.News;
+import utils.Request;
+import utils.ResearchPaper;
+import utils.UniversityJournal;
 import data.Database;
 import enumerations.*;
 import core.LocalizationManager;
@@ -24,7 +29,12 @@ public class AdminView implements View {
         System.out.println("2. " + LocalizationManager.getString("admin_opt2"));
         System.out.println("3. " + LocalizationManager.getString("admin_opt3"));
         System.out.println("4. " + LocalizationManager.getString("admin_opt4"));
-        System.out.println("9. " + LocalizationManager.getString("change_lang"));
+        System.out.println("5. " + LocalizationManager.getString("send_message"));
+        System.out.println("6. " + LocalizationManager.getString("view_inbox"));
+        System.out.println("7. " + LocalizationManager.getString("view_news"));
+        System.out.println("8. " + LocalizationManager.getString("journals_menu"));
+        System.out.println("9. " + LocalizationManager.getString("send_support_request"));
+        System.out.println("10. " + LocalizationManager.getString("change_lang"));
         System.out.println("0. " + LocalizationManager.getString("logout_msg"));
     }
 
@@ -35,12 +45,17 @@ public class AdminView implements View {
             case 2 -> removeUser();
             case 3 -> viewAllUsers();
             case 4 -> viewLogs();
-            case 9 -> changeLanguage();
+            case 5 -> sendMessageToEmployee();
+            case 6 -> viewInbox();
+            case 7 -> viewNews();
+            case 8 -> journalsMenu();
+            case 9 -> sendSupportRequest();
+            case 10 -> changeLanguage();
             case 0 -> System.out.println(LocalizationManager.getString("logout_msg"));
             default -> System.out.println(LocalizationManager.getString("err_invalid"));
         }
     }
-
+    
     private void addUser() {
         System.out.print(LocalizationManager.getString("msg_enter_role") + " (STUDENT/TEACHER/ADMIN/MANAGER/TECH_SUPPORT/GRADUATED_STUDENT): ");
         String role = scanner.nextLine().toUpperCase();
@@ -104,16 +119,184 @@ public class AdminView implements View {
 
     private void removeUser() {
         String id = readNonEmpty(LocalizationManager.getString("msg_enter_remove_id"));
+//        user.getName()
         admin.removeUser(id);
     }
 
     private void viewAllUsers() {
         db.getUsers().forEach(System.out::println);
     }
-
+    
     private void viewLogs() {
         admin.viewLogs();
     }
+    
+    private void sendMessageToEmployee() {
+        List<Employee> employees = db.getUsers().stream()
+                .filter(u -> u instanceof Employee && !u.equals(admin))
+                .map(u -> (Employee) u)
+                .toList();
+        if (employees.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_other_employees"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_receiver"));
+        for (int i = 0; i < employees.size(); i++) {
+            System.out.println((i + 1) + ". " + employees.get(i).getName());
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= employees.size()) return;
+        Employee receiver = employees.get(idx);
+        System.out.print(LocalizationManager.getString("enter_message_text"));
+        String content = scanner.nextLine();
+        if (content.trim().isEmpty()) return;
+        admin.sendMessage(receiver, content);
+    }
+
+    private void viewInbox(){
+        List<Message> inbox = admin.getInbox();
+        if (inbox.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_messages"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("inbox_title"));
+        for (Message m : inbox) System.out.println(m);
+    }
+
+    private void viewNews() {
+        List<News> allNews = db.getNews();
+        if (allNews.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_news"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("news_header"));
+        List<News> sorted = new ArrayList<>(allNews);
+        sorted.sort((a,b) -> {
+            if (a.isPinned() != b.isPinned())
+                return Boolean.compare(b.isPinned(), a.isPinned());
+            return b.getPostDate().compareTo(a.getPostDate());
+        });
+        for (News n : sorted) {
+            System.out.println(n);
+            System.out.println("--- Comments ---");
+            for (News.Comment c : n.getComments()) {
+                System.out.println(c);
+            }
+        }
+        
+        System.out.println(LocalizationManager.getString("add_comment_prompt"));
+        String choice = scanner.nextLine();
+        if ("y".equalsIgnoreCase(choice)) {
+            System.out.print(LocalizationManager.getString("enter_comment"));
+            String commentText = scanner.nextLine();
+            System.out.println(LocalizationManager.getString("select_news_index"));
+            int idx = readInt() - 1;
+            if (idx >= 0 && idx < allNews.size()) {
+                News selected = allNews.get(idx);
+                selected.addComment((User) (admin instanceof User ? admin : admin), commentText);
+                db.save();
+                System.out.println(LocalizationManager.getString("comment_added"));
+            }
+            
+        }
+    }
+    
+    private void journalsMenu() {
+        boolean back = false;
+        while (!back) {
+            System.out.println("\n--- " + LocalizationManager.getString("journals_title") + " ---");
+            System.out.println("1. " + LocalizationManager.getString("view_all_journals"));
+            System.out.println("2. " + LocalizationManager.getString("my_subscriptions"));
+            System.out.println("3. " + LocalizationManager.getString("subscribe_to_journal"));
+            System.out.println("4. " + LocalizationManager.getString("unsubscribe_from_journal"));
+           
+            System.out.println("0. " + LocalizationManager.getString("back"));
+            int ch = readInt();
+            switch (ch) {
+                case 1 -> viewAllJournals();
+                case 2 -> viewMySubscriptions(admin);
+                case 3 -> subscribeToJournal(admin);
+                case 4 -> unsubscribeFromJournal(admin);
+               
+                case 0 -> back = true;
+                default -> System.out.println(LocalizationManager.getString("err_invalid"));
+            }
+        }
+    }
+    private void viewAllJournals() {
+        List<UniversityJournal> journals = db.getJournals();
+        if (journals.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_journals"));
+            return;
+        }
+        for (UniversityJournal j : journals) {
+            System.out.println(j.getName() + " (papers: " + j.getPapers().size() + ")");
+        }
+    }
+
+    private void viewMySubscriptions(User user) {
+        List<UniversityJournal> subs = user.getSubscribedJournals();
+        if (subs.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_subscriptions"));
+            return;
+        }
+        for (UniversityJournal j : subs) {
+            System.out.println(j.getName());
+            System.out.println(LocalizationManager.getString("papers_in_journal"));
+            for (ResearchPaper p : j.getPapers()) {
+                System.out.println("  " + p.getTitle());
+            }
+        }
+    }
+
+    private void subscribeToJournal(User user) {
+        List<UniversityJournal> journals = db.getJournals();
+        if (journals.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_journals"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_journal"));
+        for (int i = 0; i < journals.size(); i++) {
+            System.out.println((i+1) + ". " + journals.get(i).getName());
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= journals.size()) return;
+        UniversityJournal journal = journals.get(idx);
+        user.subscribeToJournal(journal);
+        System.out.println(LocalizationManager.getString("subscribed", journal.getName()));
+    }
+
+    private void unsubscribeFromJournal(User user) {
+        List<UniversityJournal> subs = user.getSubscribedJournals();
+        if (subs.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_subscriptions"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_subscription"));
+        for (int i = 0; i < subs.size(); i++) {
+            System.out.println((i+1) + ". " + subs.get(i).getName());
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= subs.size()) return;
+        UniversityJournal journal = subs.get(idx);
+        user.unsubscribeFromJournal(journal);
+        System.out.println(LocalizationManager.getString("unsubscribed", journal.getName()));
+    }
+    
+    private void sendSupportRequest() {
+        System.out.print(LocalizationManager.getString("enter_problem_description"));
+        String description = scanner.nextLine();
+        if (description.trim().isEmpty()) {
+            System.out.println(LocalizationManager.getString("err_invalid"));
+            return;
+        }
+        Request request = new Request();
+        request.setDescription(description);
+        db.getRequests().add(request);
+        db.save();
+        System.out.println(LocalizationManager.getString("request_sent"));
+    }
+    
     private void changeLanguage() {
         System.out.println(LocalizationManager.getString("change_lang"));
         System.out.println(LocalizationManager.getString("language_choice_menu"));

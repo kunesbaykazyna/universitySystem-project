@@ -17,7 +17,7 @@ public class UniversityJournal implements Serializable{
     public UniversityJournal(String name) {
         this.name = name;
     }
-
+    
     public void addSubscriber(User user) {
         if (!subscribers.contains(user)) subscribers.add(user);
     }
@@ -34,5 +34,13 @@ public class UniversityJournal implements Serializable{
         	String notificationMessage = LocalizationManager.getString("journal_new_paper_notification", name, paperTitle);
             user.update(notificationMessage);
         }
+    }
+    
+    public String getName() {
+    	return name;
+    }
+    
+    public List<ResearchPaper> getPapers() {
+        return papers;
     }
 }

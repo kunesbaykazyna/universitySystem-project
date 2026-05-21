@@ -17,27 +17,10 @@ public class Teacher extends Employee{
         super(userId, name, password, login, salary);
         this.faculty = faculty;
         this.teacherType = teacherType;
+        if (teacherType == TeacherType.PROFESSOR) {
+            setResearcher(true);
+        }
     }
-
-//    public void putMark(Enrollment e, Mark markValue) {
-//        if (e == null) {
-//            return;
-//        }
-//        if (markValue == null) {
-//            return;
-//        }
-//
-//        e.setMark(markValue);
-//
-//        if (e.getStudent() == null) {
-//            return;
-//        }
-//        if (e.getCourse() == null) {
-//            return;
-//        }
-//
-//        e.getStudent().getMarks().put(e.getCourse(), markValue);
-//    }
     
     public void requestResearcherStatus() {
         Request request = new Request();
@@ -59,6 +42,8 @@ public class Teacher extends Employee{
         }
         enrollment.setMark(mark);
         System.out.println(LocalizationManager.getString("mark_successfully_put"));
+        enrollment.getStudent().updateGpa();
+        Database.getInstance().save();
     }
 
     public void markAttendance(Lesson less, Student s, boolean present) {

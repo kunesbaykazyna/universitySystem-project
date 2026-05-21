@@ -14,17 +14,6 @@ public class Employee extends User implements Comparable<Employee> {
 		super(userId, name, password, login);
 		this.setSalary(salary);
 	}
-	public double getSalary() {
-		return salary;
-	}
-	public void setSalary(double salary) {
-		this.salary = salary;
-	}
-
-	@Override
-	public String toString() {
-		return LocalizationManager.getString("employee_info", getUserId(), getName(), getSalary());
-	}
 	
 	@Override 
 	public boolean equals(Object o) {
@@ -52,4 +41,18 @@ public class Employee extends User implements Comparable<Employee> {
 	            .filter(m -> m.getReceiver() != null && m.getReceiver().equals(this))
 	            .toList();
 	}
+	
+	@Override
+	public String toString() {
+		return LocalizationManager.getString("employee_info", getUserId(), getName(), getSalary());
+	}
+	
+	public double getSalary() {
+		return salary;
+	}
+	
+	public void setSalary(double salary) {
+		this.salary = salary;
+	}
+
 }

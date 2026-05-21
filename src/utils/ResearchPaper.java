@@ -29,13 +29,33 @@ public class ResearchPaper implements Serializable {
         return strategy.formatCitation(this);
     }
 
-    public String getTitle() { return title; }
-    public String getAuthors() { return authors; }
-    public int getPages() { return pages; }
-    public String getJournal() { return journal; }
-    public String getDoi() { return doi; }
-    public Date getDate() { return date; }
-    public int getCitations() { return citations; }
+    public String getTitle() { 
+    	return title; 
+    }
+    
+    public String getAuthors() { 
+    	return authors; 
+    }
+    
+    public int getPages() { 
+    	return pages; 
+    }
+    
+    public String getJournal() { 
+    	return journal;
+    }
+    
+    public String getDoi() { 
+    	return doi; 
+    }
+    
+    public Date getDate() { 
+    	return date;
+    }
+    
+    public int getCitations() { 
+    	return citations;
+    }
 
     @Override
     public String toString() {

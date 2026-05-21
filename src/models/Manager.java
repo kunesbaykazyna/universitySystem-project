@@ -38,7 +38,6 @@ public class Manager extends Employee{
         if (c == null) {
             return;
         }
-
         c.addTeacher(t);
         System.out.println(LocalizationManager.getString("success_assign_teacher",t.getName(),c.getName()));
     }
@@ -52,11 +51,9 @@ public class Manager extends Employee{
 
     public String createReport(List<Course> courses) {
         StringBuilder report = new StringBuilder();
-
         if (courses == null) {
             return report.toString();
         }
-
         for (Course course : courses) {
             if (course == null) {
                 continue;
@@ -144,22 +141,22 @@ public class Manager extends Employee{
         System.out.println(LocalizationManager.getString("registration_approved", course.getName()));
     }
 
-//    public void addRegistration(Enrollment e) {
-//        if (e == null) {
-//            return;
-//        }
-//        if (Database.getInstance().getRegistrationQueue().contains(e)) {
-//            return;
-//        }
-//
-//        Database.getInstance().getRegistrationQueue().add(e);
-//    }
-
     public void addRegistration(Enrollment e) {
         if (e == null) return;
         List<Enrollment> queue = Database.getInstance().getRegistrationQueue();
         if (queue.contains(e)) return;
         queue.add(e);
+    }
+
+	@Override
+	public String toString() {
+	    return LocalizationManager.getString("manager_info", getUserId(), getName(), getSalary(), managerType);
+	}
+	
+	public void addComplaint(Complaint complaint) {
+        if (complaint != null) {
+            complaints.add(complaint);
+        }
     }
     
     public void sendMessage(Employee receiver, String content) {
@@ -177,18 +174,7 @@ public class Manager extends Employee{
         return complaints;
     }
 
-    public void addComplaint(Complaint complaint) {
-        if (complaint != null) {
-            complaints.add(complaint);
-        }
-    }
-
 	public ManagerTypes getManagerType() {
 		return managerType;
-	}
-
-	@Override
-	public String toString() {
-	    return LocalizationManager.getString("manager_info", getUserId(), getName(), getSalary(), managerType);
 	}
 }

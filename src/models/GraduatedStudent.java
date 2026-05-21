@@ -34,14 +34,6 @@ public class GraduatedStudent extends Student {
         this.diplomaProjects = new ArrayList<>();
     }
 
-    public ResearcherDecorator getSupervisor() {
-        return supervisor;
-    }
-
-    public GraduateLevel getLevel() {
-        return level;
-    }
-
     public List<ResearchPaper> getDiplomaProjects() {
         return diplomaProjects;
     }
@@ -50,10 +42,17 @@ public class GraduatedStudent extends Student {
         diplomaProjects.add(paper);
     }
 
+    public ResearcherDecorator getSupervisor() {
+        return supervisor;
+    }
+
+    public GraduateLevel getLevel() {
+        return level;
+    }
+    
     @Override
     public String toString() {
     	return LocalizationManager.getString("graduated_student_info", 
-                getUserId(), 
                 getName(), 
                 level, 
                 supervisor.getName(), 

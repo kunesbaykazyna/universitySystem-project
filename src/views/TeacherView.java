@@ -45,7 +45,9 @@ public class TeacherView implements View {
         }
         System.out.println("8. " + LocalizationManager.getString("view_inbox"));
         System.out.println("9. " + LocalizationManager.getString("view_news"));
-        System.out.println("10. " + LocalizationManager.getString("change_lang"));
+        System.out.println("10. " + LocalizationManager.getString("journals_menu"));
+        System.out.println("11. " + LocalizationManager.getString("send_support_request"));
+        System.out.println("12. " + LocalizationManager.getString("change_lang"));
         System.out.println("0. " + LocalizationManager.getString("logout_msg"));
     }
 
@@ -64,53 +66,20 @@ public class TeacherView implements View {
             }
             case 8 -> viewInbox();
             case 9 -> viewNews();
-            case 10 -> changeLanguage();
+            case 10 -> journalsMenu();
+            case 11 -> sendSupportRequest();
+            case 12 -> changeLanguage();
             case 0 -> System.out.println(LocalizationManager.getString("logout_msg"));
             default -> System.out.println(LocalizationManager.getString("err_invalid"));
         }
     }
-
+    
     private void viewMyCourses() {
         List<Course> myCourses = getTeacherObject().getMyCourses();
         if (myCourses.isEmpty()) {
             System.out.println(LocalizationManager.getString("no_courses"));
         } else {
             myCourses.forEach(System.out::println);
-        }
-    }
-
-    private void viewInbox() {
-        List<Message> inbox = getTeacherObject().getInbox();
-        if (inbox.isEmpty()) {
-            System.out.println(LocalizationManager.getString("no_messages"));
-            return;
-        }
-        System.out.println(LocalizationManager.getString("inbox_title"));
-        for (Message m : inbox) {
-            System.out.println(m);
-        }
-    }
-
-    private void viewNews() {
-        List<News> allNews = db.getNews();
-        if (allNews.isEmpty()) {
-            System.out.println(LocalizationManager.getString("no_news"));
-            return;
-        }
-        System.out.println(LocalizationManager.getString("news_header"));
-        for (News n : allNews) {
-            if (n.isPinned()) {
-                System.out.println(" "+ LocalizationManager.getString("news_item", n.getTitle(), n.getPostDate()) + LocalizationManager.getString("pinned_news"));
-                System.out.println(LocalizationManager.getString("news_content", n.getContent()));
-                System.out.println("---");
-            }
-        }
-        for (News n : allNews) {
-            if (!n.isPinned()) {
-                System.out.println(LocalizationManager.getString("news_item", n.getTitle(), n.getPostDate()));
-                System.out.println(LocalizationManager.getString("news_content", n.getContent()));
-                System.out.println("---");
-            }
         }
     }
     
@@ -154,7 +123,7 @@ public class TeacherView implements View {
         Mark mark = new Mark(a1, a2, fin);
         getTeacherObject().putMark(enrollment, mark);
     }
-
+    
     private void markAttendance() {
         List<Course> myCourses = getTeacherObject().getMyCourses();
         if (myCourses.isEmpty()) {
@@ -187,7 +156,7 @@ public class TeacherView implements View {
         }
         System.out.println(LocalizationManager.getString("attendance_saved"));
     }
-
+    
     private void sendComplaint() {
         System.out.print(LocalizationManager.getString("enter_student_id"));
         String sid = scanner.nextLine();
@@ -256,7 +225,7 @@ public class TeacherView implements View {
         }
         getTeacherObject().sendMessage(receiver, content);
     }
-
+    
     private void researchMenu() {
         ResearcherDecorator rd = getResearcherDecorator();
         if (rd == null) return;
@@ -269,6 +238,7 @@ public class TeacherView implements View {
             System.out.println("4. " + LocalizationManager.getString("research_print_date"));
             System.out.println("5. " + LocalizationManager.getString("research_print_pages"));
             System.out.println("6. " + LocalizationManager.getString("research_calc_hindex"));
+            System.out.println("7. " + LocalizationManager.getString("publish_to_journal"));
             System.out.println("0. " + LocalizationManager.getString("research_back"));
             int ch = readInt();
             switch (ch) {
@@ -278,10 +248,42 @@ public class TeacherView implements View {
                 case 4 -> rd.printPapers(Comparator.comparing(ResearchPaper::getDate).reversed());
                 case 5 -> rd.printPapers(Comparator.comparingInt(ResearchPaper::getPages).reversed());
                 case 6 -> System.out.println("H-index: " + rd.calculateHIndex());
+                case 7 -> publishToJournal();
                 case 0 -> back = true;
                 default -> System.out.println(LocalizationManager.getString("err_invalid"));
             }
         }
+    }
+    
+    private void publishToJournal() {
+        ResearcherDecorator rd = getResearcherDecorator();
+        if (rd == null) return;
+        List<UniversityJournal> journals = db.getJournals();
+        if (journals.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_journals"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_journal"));
+        for (int i = 0; i < journals.size(); i++) {
+            System.out.println((i+1) + ". " + journals.get(i).getName());
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= journals.size()) return;
+        UniversityJournal journal = journals.get(idx);
+        
+        System.out.print(LocalizationManager.getString("prompt_title"));
+        String title = scanner.nextLine();
+        System.out.print(LocalizationManager.getString("prompt_authors"));
+        String authors = scanner.nextLine();
+        System.out.print(LocalizationManager.getString("prompt_journal"));
+        String journalName = scanner.nextLine(); // название журнала-источника
+        int pages = readInt(LocalizationManager.getString("prompt_pages"));
+        int citations = readInt(LocalizationManager.getString("prompt_citations"));
+        System.out.print(LocalizationManager.getString("prompt_doi"));
+        String doi = scanner.nextLine();
+        ResearchPaper paper = new ResearchPaper(title, authors, journalName, pages, new Date(), citations, doi);
+        rd.publishToJournal(journal, paper);
+        System.out.println(LocalizationManager.getString("paper_published"));
     }
 
     private void addPaper(ResearcherDecorator rd) {
@@ -299,6 +301,151 @@ public class TeacherView implements View {
         rd.addPaper(paper);
         System.out.println(LocalizationManager.getString("paper_added"));
     }
+    
+    private void viewInbox() {
+        List<Message> inbox = getTeacherObject().getInbox();
+        if (inbox.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_messages"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("inbox_title"));
+        for (Message m : inbox) {
+            System.out.println(m);
+        }
+    }
+    
+    private void viewNews() {
+        List<News> allNews = db.getNews();
+        if (allNews.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_news"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("news_header"));
+        List<News> sorted = new ArrayList<>(allNews);
+        sorted.sort((a,b) -> {
+            if (a.isPinned() != b.isPinned())
+                return Boolean.compare(b.isPinned(), a.isPinned());
+            return b.getPostDate().compareTo(a.getPostDate());
+        });
+        for (News n : allNews) {
+            System.out.println(n);
+            System.out.println("--- Comments ---");
+            for (News.Comment c : n.getComments()) {
+                System.out.println(c);
+            }
+        }
+        System.out.println(LocalizationManager.getString("add_comment_prompt"));
+        String choice = scanner.nextLine();
+        if ("y".equalsIgnoreCase(choice)) {
+            System.out.print(LocalizationManager.getString("enter_comment"));
+            String commentText = scanner.nextLine();
+            System.out.println(LocalizationManager.getString("select_news_index"));
+            int idx = readInt() - 1;
+            if (idx >= 0 && idx < allNews.size()) {
+                News selected = allNews.get(idx);
+                selected.addComment((User) (teacher instanceof User ? teacher : getTeacherObject()), commentText);
+                db.save();
+                System.out.println(LocalizationManager.getString("comment_added"));
+            }
+        }
+    }
+    
+    private void journalsMenu() {
+        Teacher teacher = getTeacherObject();
+        boolean back = false;
+        while (!back) {
+            System.out.println("\n--- " + LocalizationManager.getString("journals_title") + " ---");
+            System.out.println("1. " + LocalizationManager.getString("view_all_journals"));
+            System.out.println("2. " + LocalizationManager.getString("my_subscriptions"));
+            System.out.println("3. " + LocalizationManager.getString("subscribe_to_journal"));
+            System.out.println("4. " + LocalizationManager.getString("unsubscribe_from_journal"));
+           
+            System.out.println("0. " + LocalizationManager.getString("back"));
+            int ch = readInt();
+            switch (ch) {
+                case 1 -> viewAllJournals();
+                case 2 -> viewMySubscriptions(teacher);
+                case 3 -> subscribeToJournal(teacher);
+                case 4 -> unsubscribeFromJournal(teacher);
+               
+                case 0 -> back = true;
+                default -> System.out.println(LocalizationManager.getString("err_invalid"));
+            }
+        }
+    }
+    private void viewAllJournals() {
+        List<UniversityJournal> journals = db.getJournals();
+        if (journals.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_journals"));
+            return;
+        }
+        for (UniversityJournal j : journals) {
+            System.out.println(j.getName() + " (papers: " + j.getPapers().size() + ")");
+        }
+    }
+
+    private void viewMySubscriptions(User user) {
+        List<UniversityJournal> subs = user.getSubscribedJournals();
+        if (subs.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_subscriptions"));
+            return;
+        }
+        for (UniversityJournal j : subs) {
+            System.out.println(j.getName());
+            System.out.println(LocalizationManager.getString("papers_in_journal"));
+            for (ResearchPaper p : j.getPapers()) {
+                System.out.println("  " + p.getTitle());
+            }
+        }
+    }
+
+    private void subscribeToJournal(User user) {
+        List<UniversityJournal> journals = db.getJournals();
+        if (journals.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_journals"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_journal"));
+        for (int i = 0; i < journals.size(); i++) {
+            System.out.println((i+1) + ". " + journals.get(i).getName());
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= journals.size()) return;
+        UniversityJournal journal = journals.get(idx);
+        user.subscribeToJournal(journal);
+        System.out.println(LocalizationManager.getString("subscribed", journal.getName()));
+    }
+
+    private void unsubscribeFromJournal(User user) {
+        List<UniversityJournal> subs = user.getSubscribedJournals();
+        if (subs.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_subscriptions"));
+            return;
+        }
+        System.out.println(LocalizationManager.getString("select_subscription"));
+        for (int i = 0; i < subs.size(); i++) {
+            System.out.println((i+1) + ". " + subs.get(i).getName());
+        }
+        int idx = readInt() - 1;
+        if (idx < 0 || idx >= subs.size()) return;
+        UniversityJournal journal = subs.get(idx);
+        user.unsubscribeFromJournal(journal);
+        System.out.println(LocalizationManager.getString("unsubscribed", journal.getName()));
+    }
+    
+    private void sendSupportRequest() {
+        System.out.print(LocalizationManager.getString("enter_problem_description"));
+        String description = scanner.nextLine();
+        if (description.trim().isEmpty()) {
+            System.out.println(LocalizationManager.getString("err_invalid"));
+            return;
+        }
+        Request request = new Request();
+        request.setDescription(description);
+        db.getRequests().add(request);
+        db.save();
+        System.out.println(LocalizationManager.getString("request_sent"));
+    }   
     
     private void changeLanguage() {
         System.out.println(LocalizationManager.getString("change_lang"));

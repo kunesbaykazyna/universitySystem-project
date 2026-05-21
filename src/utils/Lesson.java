@@ -14,10 +14,7 @@ public class Lesson implements Serializable{
     private int hours;
     private Course course;
     private Map<Student,Boolean> attendance = new java.util.HashMap<>();
-
-    public Lesson() {
-    }
-
+    
     public Lesson(LessonType lessontype) {
         this.lessontype = lessontype;
     }
@@ -41,15 +38,7 @@ public class Lesson implements Serializable{
         }
         attendance.put(s, present);
     }
-
-    public Map<Student, Boolean> getAttendance() {
-        return attendance;
-    }
-
-    public int getHours() {
-        return hours;
-    }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -76,7 +65,16 @@ public class Lesson implements Serializable{
 	public Course getCourse() {
 		return course;
 	}
+	
 	public void setCourse(Course course) { 
 		this.course = course; 
 	}
+	
+	public Map<Student, Boolean> getAttendance() {
+        return attendance;
+    }
+
+    public int getHours() {
+        return hours;
+    }
 }

@@ -39,19 +39,27 @@ public class Log implements Serializable {
     public static class LogEntry implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final String        userId;
-        private final String        action;
+        private final String userId;
+        private final String action;
         private final LocalDateTime timestamp;
 
         public LogEntry(String userId, String action, LocalDateTime timestamp) {
-            this.userId    = userId;
-            this.action    = action;
+            this.userId = userId;
+            this.action = action;
             this.timestamp = timestamp;
         }
 
-        public String        getUserId()    { return userId; }
-        public String        getAction()    { return action; }
-        public LocalDateTime getTimestamp() { return timestamp; }
+        public String getUserId(){ 
+        	return userId; 
+        }
+        
+        public String getAction(){ 
+        	return action; 
+        }
+        
+        public LocalDateTime getTimestamp() {
+        	return timestamp;
+        }
 
         @Override
         public String toString() {

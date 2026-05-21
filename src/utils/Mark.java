@@ -11,9 +11,6 @@ public class Mark implements Serializable{
     private double att2;
     private double finalExam;
 
-    public Mark() {
-    }
-
     public Mark(double att1, double att2, double finalExam) {
         this.att1 = att1;
         this.att2 = att2;
@@ -61,30 +58,6 @@ public class Mark implements Serializable{
         return 0.0;
     }
 
-    public double getAtt1() {
-        return att1;
-    }
-
-    public void setAtt1(double att1) {
-        this.att1 = att1;
-    }
-
-    public double getAtt2() {
-        return att2;
-    }
-
-    public void setAtt2(double att2) {
-        this.att2 = att2;
-    }
-
-    public double getFinalExam() {
-        return finalExam;
-    }
-
-    public void setFinalExam(double finalExam) {
-        this.finalExam = finalExam;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -107,5 +80,29 @@ public class Mark implements Serializable{
     @Override
     public String toString() {
         return LocalizationManager.getString("mark_info", att1, att2, finalExam, getTotal());
+    }
+    
+    public double getAtt1() {
+        return att1;
+    }
+
+    public void setAtt1(double att1) {
+        this.att1 = att1;
+    }
+
+    public double getAtt2() {
+        return att2;
+    }
+
+    public void setAtt2(double att2) {
+        this.att2 = att2;
+    }
+
+    public double getFinalExam() {
+        return finalExam;
+    }
+
+    public void setFinalExam(double finalExam) {
+        this.finalExam = finalExam;
     }
 }

@@ -13,6 +13,7 @@ import utils.Course;
 import utils.Enrollment;
 import utils.Mark;
 import utils.Request;
+import utils.StudentOrganization;
 
 public class Student extends User{
     private static final long serialVersionUID = 1L;
@@ -26,7 +27,6 @@ public class Student extends User{
         super(userId, name, password, login);
         this.faculty=faculty;
         this.yearsOfStudy=yos;
-
     }
 
     public void viewTeacherInfo(Teacher t) {
@@ -40,7 +40,6 @@ public class Student extends User{
         if (e.getMark() == null) {
             return;
         }
-
         System.out.print(e.getMark().getTotal());
     }
 
@@ -50,10 +49,7 @@ public class Student extends User{
             System.out.println(LocalizationManager.getString("err_reg_denied"));
             return;
         }
-        Enrollment newEnrollment = new Enrollment(c, this, semester);
-        enrollments.add(newEnrollment);
-        c.addEnrollment(newEnrollment);
-        
+        Enrollment newEnrollment = new Enrollment(c, this, semester);     
         Manager manager = (Manager) Database.getInstance().getUsers().stream()
                 .filter(u -> u instanceof Manager)
                 .findFirst()
@@ -63,29 +59,9 @@ public class Student extends User{
         }
         System.out.println(LocalizationManager.getString("student_applied", c.getName()));
     }
+    
     public void rateTeacher(Teacher t, int rating) {
         System.out.println(LocalizationManager.getString("student_rated_teacher", t.getName(), rating));
-    }
-
-    public int getYearsOfStudy() {
-        return yearsOfStudy;
-    }
-
-    public double getGpa() {
-        updateGpa();
-        return gpa;
-    }
-
-    public Faculty getFaculty() {
-        return faculty;
-    }
-
-    public List<Enrollment> getEnrollments() {
-        return enrollments;
-    }
-
-    public Map<Course, Mark> getMarks() {
-        return marks;
     }
 
     public int getCurrentCredits() {
@@ -189,15 +165,55 @@ public class Student extends User{
         transcript.append(LocalizationManager.getString("transcript_gpa_footer", getGpa()));
         return transcript.toString();
     }
+    
+    public void createOrganization(String name) {
+        StudentOrganization org = new StudentOrganization(name, this);
+        Database.getInstance().getOrganizations().add(org);
+    }
+
+    public void joinOrganization(StudentOrganization org) {
+        if (!org.getMembers().contains(this)) {
+            org.addMember(this);
+        }
+    }
+
+    public void leaveOrganization(StudentOrganization org) {
+        org.removeMember(this);
+    }
+
+    public List<StudentOrganization> getMyOrganizations() {
+        return Database.getInstance().getOrganizations().stream()
+                .filter(org -> org.getMembers().contains(this))
+                .toList();
+    }
 
     public String viewTranscript() {
         return generateTranscript();
+    }
+    
+    public int getYearsOfStudy() {
+        return yearsOfStudy;
+    }
+
+    public double getGpa() {
+        updateGpa();
+        return gpa;
+    }
+
+    public Faculty getFaculty() {
+        return faculty;
+    }
+
+    public List<Enrollment> getEnrollments() {
+        return enrollments;
+    }
+
+    public Map<Course, Mark> getMarks() {
+        return marks;
     }
 
     @Override
     public String toString() {
         return LocalizationManager.getString("student_info", getName(), faculty, yearsOfStudy, getGpa());
     }
-
-
 }

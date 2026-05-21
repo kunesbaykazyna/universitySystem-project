@@ -25,20 +25,31 @@ public class News implements Serializable {
         comments.add(new Comment(author, text));
     }
 
-    public List<Comment> getComments() {
-        return comments;
-    }
-
-    public String getTitle() { return title; }
-    public String getContent() { return content; }
-    public Date getPostDate() { return postDate; }
-    public boolean isPinned() { return isPinned; }
-
     @Override
     public String toString() {
         return "Title: " + title + "\nContent: " + content;
     }
 
+    public List<Comment> getComments() {
+        return comments;
+    }
+    
+    public String getTitle() { 
+    	return title; 
+    }
+    
+    public String getContent() { 
+    	return content; 
+    }
+    
+    public Date getPostDate() {
+    	return postDate;
+    }
+    
+    public boolean isPinned() {
+    	return isPinned; 
+    }
+    
     public static class Comment implements Serializable {
         private static final long serialVersionUID = 1L;
         private User author;
@@ -51,13 +62,22 @@ public class News implements Serializable {
             this.date = new Date();
         }
 
-        public User getAuthor() { return author; }
-        public String getText() { return text; }
-        public Date getDate() { return date; }
-
         @Override
         public String toString() {
             return author.getName() + ": " + text + " (" + date + ")";
         }
+        
+        public User getAuthor() { 
+        	return author;
+        }
+        
+        public String getText() { 
+        	return text; 
+        }
+        
+        public Date getDate() {
+        	return date; 
+        }
+        
     }
 }

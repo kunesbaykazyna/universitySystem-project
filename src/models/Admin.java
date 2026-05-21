@@ -2,6 +2,8 @@ package models;
 
 import data.Database;
 import factory.UserFactory;
+import utils.Message;
+
 import java.util.List;
 
 import core.LocalizationManager;
@@ -23,7 +25,6 @@ public class Admin extends Employee {
         	System.out.println(LocalizationManager.getString("err_user_exists"));
             return;
         }
-
         allUsers.add(user);
         db.save(); //изменение в бд сохранить
         db.getLog().addEntry(this.getUserId(), LocalizationManager.getString("log_add_user", user.getUserId()));
@@ -33,6 +34,13 @@ public class Admin extends Employee {
     public void addUser(String role, String userId, String name, String password, String login, Object... extraArgs) {
         User user = UserFactory.createUser(role, userId, name, password, login, extraArgs);
         addUser(user); 
+    }
+    
+    public void sendMessage(Employee receiver, String content) {
+        Message msg = new Message(this, receiver, content);
+        Database.getInstance().getMessages().add(msg);
+        Database.getInstance().save();
+        System.out.println(LocalizationManager.getString("message_sent", receiver.getName()));
     }
 
     public void removeUser(String userId) {

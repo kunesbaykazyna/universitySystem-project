@@ -24,24 +24,7 @@ public class Complaint implements Serializable{
         this.student=student;
         this.date = new Date();
     }
-
-
-	public String getText() {
-        return text;
-    }
-
-    public UrgencyLevel getUrgency() {
-        return urgency;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public Teacher getTeacher() {
-        return teacher;
-    }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -70,4 +53,20 @@ public class Complaint implements Serializable{
 	public Student getStudent() {
 		return student;
 	}
+	public String getText() {
+        return text;
+    }
+
+    public UrgencyLevel getUrgency() {
+        return urgency;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public Teacher getTeacher() {
+        return teacher;
+    }
+
 }

@@ -1,6 +1,7 @@
 package core;
 
 import enumerations.Language;
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -31,7 +32,11 @@ public class LocalizationManager {
     }
 
     public static String getString(String key, Object... args) {
-        String pattern = getString(key);
-        return String.format(pattern, args);
+        try {
+            String pattern = bundle.getString(key);
+            return MessageFormat.format(pattern, args);
+        } catch (Exception e) {
+            return "  " + key + "  ";
+        }
     }
 }
