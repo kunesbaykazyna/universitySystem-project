@@ -46,7 +46,10 @@ public class StudentView implements View {
         System.out.println("8. " + LocalizationManager.getString("view_news"));
         System.out.println("9. " + LocalizationManager.getString("journals_menu"));
         System.out.println("10. " + LocalizationManager.getString("student_orgs"));
-        System.out.println("11. " + LocalizationManager.getString("change_lang"));
+        if (getStudentObject() instanceof GraduatedStudent) {
+            System.out.println("11. " + LocalizationManager.getString("diploma_projects"));
+        }
+        System.out.println("12. " + LocalizationManager.getString("change_lang"));
         System.out.println("0. " + LocalizationManager.getString("logout_msg"));
     }
 
@@ -66,7 +69,14 @@ public class StudentView implements View {
             case 8 -> viewNews();
             case 9 -> journalsMenu();
             case 10 -> organizationsMenu();
-            case 11 -> changeLanguage();
+            case 11 -> {
+                if (getStudentObject() instanceof GraduatedStudent) {
+                    manageDiplomaProjects();
+                } else {
+                    System.out.println(LocalizationManager.getString("err_invalid"));
+                }
+            }
+            case 12 -> changeLanguage();
             case 0 -> System.out.println(LocalizationManager.getString("logout_msg"));
             default -> System.out.println(LocalizationManager.getString("err_invalid"));
         }
@@ -481,6 +491,52 @@ public class StudentView implements View {
                 case 0 -> back = true;
             }
         }
+    }
+    
+    private void manageDiplomaProjects() {
+        GraduatedStudent gs = (GraduatedStudent) getStudentObject();
+        boolean back = false;
+        while (!back) {
+            System.out.println("\n--- " + LocalizationManager.getString("diploma_projects") + " ---");
+            System.out.println("1. " + LocalizationManager.getString("view_diploma_projects"));
+            System.out.println("2. " + LocalizationManager.getString("add_diploma_project"));
+            System.out.println("0. " + LocalizationManager.getString("back"));
+            int ch = readInt();
+            switch (ch) {
+                case 1 -> viewDiplomaProjects(gs);
+                case 2 -> addDiplomaProject(gs);
+                case 0 -> back = true;
+                default -> System.out.println(LocalizationManager.getString("err_invalid"));
+            }
+        }
+    }
+
+    private void viewDiplomaProjects(GraduatedStudent gs) {
+        List<ResearchPaper> projects = gs.getDiplomaProjects();
+        if (projects.isEmpty()) {
+            System.out.println(LocalizationManager.getString("no_diploma_projects"));
+            return;
+        }
+        for (ResearchPaper p : projects) {
+            System.out.println(p);
+        }
+    }
+
+    private void addDiplomaProject(GraduatedStudent gs) {
+        System.out.print(LocalizationManager.getString("prompt_title"));
+        String title = scanner.nextLine();
+        System.out.print(LocalizationManager.getString("prompt_authors"));
+        String authors = scanner.nextLine();
+        System.out.print(LocalizationManager.getString("prompt_journal"));
+        String journal = scanner.nextLine();
+        int pages = readInt(LocalizationManager.getString("prompt_pages"));
+        int citations = readInt(LocalizationManager.getString("prompt_citations"));
+        System.out.print(LocalizationManager.getString("prompt_doi"));
+        String doi = scanner.nextLine();
+        ResearchPaper paper = new ResearchPaper(title, authors, journal, pages, new Date(), citations, doi);
+        gs.addDiplomaProject(paper);
+        db.save();
+        System.out.println(LocalizationManager.getString("diploma_project_added"));
     }
 
     private void changeLanguage() {
